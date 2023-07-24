@@ -5,7 +5,6 @@ import org.w3c.dom.NodeList;
 import javax.swing.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -21,9 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Random;
@@ -48,11 +46,11 @@ public class Principal extends JFrame {
     //declarando componentes
     JPanel pnlGeral, pnlTopo, pnlMeio, pnlBot;
     JLabel lblCnpj,lblConvenio, lblNumNFInicio, lblNumNfFim,lblDtEmissao, lblValorTotalInicio,lblValorTotalFim,lblDesconto,
-            lblXML, lblXMLEscolhido,
+            lblQtdeBoleto,lblXML, lblXMLEscolhido,
             lblResultado, lblData, lblPagamento, lblNumProposta;
     JTextArea txtXML, txtResultado;
     JTextField txtCnpj,txtCnpjConvenio, txtNumNfInicio,txtNumNfFim,txtDtEmissao,txtValorTotalInicio,txtValorTotalFim,
-            txtDesconto;
+            txtDesconto,txtQtdeBoleto;
     JButton btnChoose, btnSalvarResultado, btnAtualizar;
     JScrollPane scrlPnlTxtXml;
     ImageIcon dolar;
@@ -174,10 +172,21 @@ public class Principal extends JFrame {
 
         txtDesconto = new JTextField(7);
         txtDesconto.setText("0");
-        txtDesconto.setBounds(655, 130, 25, 25);
+        txtDesconto.setBounds(655, 130, 120, 25);
         txtDesconto.addFocusListener(new SelecionarTexto(txtDesconto));
         txtDesconto.addKeyListener(new limitaTexto(14,txtDesconto));
         pnlMeio.add(txtDesconto);//adicionando o campo de texto configurado a janela
+
+        lblQtdeBoleto = new JLabel("Qtde de Boleto(s):");//configurando o label
+        lblQtdeBoleto.setBounds(510, 160, 140, 25);
+        pnlMeio.add(lblQtdeBoleto);//adicionando o label configurado a janela
+
+        txtQtdeBoleto = new JTextField(7);
+        txtQtdeBoleto.setText("0");
+        txtQtdeBoleto.setBounds(655, 160, 25, 25);
+        txtQtdeBoleto.addFocusListener(new SelecionarTexto(txtQtdeBoleto));
+        txtQtdeBoleto.addKeyListener(new limitaTexto(2,txtQtdeBoleto));
+        pnlMeio.add(txtQtdeBoleto);//adicionando o campo de texto configurado a janela
 
         lblXML = new JLabel("XML base");
         lblXML.setBounds(15, 5, 350, 15);
@@ -283,7 +292,7 @@ public class Principal extends JFrame {
             Transformer transformer = transformerFactory.newTransformer();
 
             // Set the output format for the transformer.
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
             // Create a string writer.
             StringWriter stringWriter = new StringWriter();
@@ -314,14 +323,14 @@ public class Principal extends JFrame {
             scrlPnlTxtXml.setViewportView(txtXML);
             scrlPnlTxtXml.setBounds(10, 40, 482, 550);
             pnlMeio.add(scrlPnlTxtXml);
-
+/*
             Node invoiceNode = doc.getElementsByTagName("nNF").item(0);
             Node newInvoiceNode = doc.createElement("nNF");
             newInvoiceNode.setTextContent(getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()),Integer.parseInt(txtNumNfFim.getText())));
 
             doc.replaceChild(invoiceNode, newInvoiceNode);
-            txtResultado.setText(doc.getTextContent());
-/*
+            System.out.println(doc.getNodeValue());
+
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Element contemApolice = (Element) nodeList.item(i);
 
@@ -415,10 +424,10 @@ public class Principal extends JFrame {
         Random rand = new Random();
         return String.valueOf(rand.nextInt(max - min + 1) + min);
     }
-    public static String getDataEmissao(int days) {
-        LocalDate today = LocalDate.now();
-        LocalDate emissionDate = today.minusDays(days);
-        Instant instant = emissionDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+    public static String getDataEmissao(int dias) {
+        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime emissionDateTime = agora.minusDays(dias);
+        Instant instant = emissionDateTime.atZone(ZoneId.of("America/Sao_Paulo")).toInstant();
         Date date = Date.from(instant);
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         String dataEmissao = df.format(date).replaceAll("(\\-\\d\\d)(\\d\\d)", "$1:$2");
@@ -430,12 +439,12 @@ public class Principal extends JFrame {
 
         public void actionPerformed(ActionEvent ev) {
             JFileChooser fcSalvar = new JFileChooser();
-            fcSalvar.setCurrentDirectory(new File("\\\\srvomt302\\InterfacesI4PRO\\Processar\\SAX_SI4PRO_AC"));
+            fcSalvar.setCurrentDirectory(new File("E:\\qa\\nf"));
             fcSalvar.setDialogTitle("Salve o XML");
 
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
             arquivoSalvo = "NF_" +  txtNumNfInicio.getText() +
-                    "_TESTE-PRODUTO-" +dtf.format(LocalDateTime.now()) + ".xml";
+                    "_TESTE-" +dtf.format(LocalDateTime.now()) + ".xml";
 
             fcSalvar.setSelectedFile(new File(arquivoSalvo));
             int salvo = fcSalvar.showSaveDialog(Principal.this);
