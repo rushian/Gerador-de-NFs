@@ -3,8 +3,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -43,14 +45,18 @@ public class Principal extends JFrame {
         this.arq = arq;
     }
 
+    Color temaTxt = Color.white;
+    Color temaBgText = new Color(50, 50, 50);
+    Color temaBordaTxtArea = Color.white;
+
     //declarando componentes
     JPanel pnlGeral, pnlTopo, pnlMeio, pnlBot;
-    JLabel lblCnpj,lblConvenio, lblNumNFInicio, lblNumNfFim,lblDtEmissao, lblValorTotalInicio,lblValorTotalFim,lblDesconto,
-            lblQtdeBoleto,lblXML, lblXMLEscolhido,
+    JLabel lblCnpj, lblConvenio, lblNumNFInicio, lblNumNfFim, lblDtEmissao, lblValorTotalInicio, lblValorTotalFim, lblDesconto,
+            lblQtdeBoleto, lblXML, lblXMLEscolhido,
             lblResultado, lblData, lblPagamento, lblNumProposta;
     JTextArea txtXML, txtResultado;
-    JTextField txtCnpj,txtCnpjConvenio, txtNumNfInicio,txtNumNfFim,txtDtEmissao,txtValorTotalInicio,txtValorTotalFim,
-            txtDesconto,txtQtdeBoleto;
+    JTextField txtCnpj, txtCnpjConvenio, txtNumNfInicio, txtNumNfFim, txtDtEmissao, txtValorTotalInicio, txtValorTotalFim,
+            txtDesconto, txtQtdeBoleto;
     JButton btnChoose, btnSalvarResultado, btnAtualizar;
     JScrollPane scrlPnlTxtXml;
     ImageIcon dolar;
@@ -64,7 +70,7 @@ public class Principal extends JFrame {
         //definindo operação padrão para o botão fechar
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//sem esta linha a janela não fecha pelo botão fechar
         //dolar = new ImageIcon(Toolkit.getDefaultToolkit().getImage("src\\main\\resources\\dolar.jpg"));
-        String pathname="src/main/resources/dolar.jpg";
+        String pathname = "src/main/resources/dolar.jpg";
         //File file=new File(pathname);
         //InputStream image = this.getClass().getResourceAsStream("src\\main\\resources\\dolar.jpg");
         //System.out.println(image);
@@ -77,7 +83,7 @@ public class Principal extends JFrame {
 
         pnlTopo = new JPanel();
         pnlTopo.setBounds(0, 0, 1120, 35);
-        pnlTopo.setBackground(Color.white);
+        pnlTopo.setBackground(new Color(20, 20, 20));
 
         btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
         pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
@@ -89,13 +95,30 @@ public class Principal extends JFrame {
         pnlMeio.setBounds(0, 35, 1180, 594);
         pnlMeio.setBackground(new Color(200, 200, 240));
 
+
+        lblXML = new JLabel("XML base");
+        lblXML.setBounds(15, 5, 350, 15);
+        pnlMeio.add(lblXML);
+
+        lblXMLEscolhido = new JLabel();
+        lblXMLEscolhido.setBounds(15, 20, 350, 15);
+        pnlMeio.add(lblXMLEscolhido);
+
+        txtXML = new JTextArea();
+        txtXML.setBorder(BorderFactory.createLineBorder(temaBordaTxtArea));
+        txtXML.setForeground(new Color(255, 255, 255));
+        txtXML.setBackground(new Color(50, 50, 50));
+        txtXML.setBounds(10, 40, 480, 540);
+        pnlMeio.add(txtXML);
+        scrlPnlTxtXml = new JScrollPane();
+
         lblCnpj = new JLabel("CNPJ emissor:");//configurando o label
         lblCnpj.setBounds(510, 8, 90, 25);
         pnlMeio.add(lblCnpj);//adicionando o label configurado a janela
 
         txtCnpj = new JTextField(14);
         txtCnpj.setText("65072595000136");
-        txtCnpj.setBounds(600,5,120,25);
+        txtCnpj.setBounds(600, 5, 120, 25);
         txtCnpj.addFocusListener(new SelecionarTexto(txtCnpj));
         txtCnpj.addKeyListener(new limitaTexto(14, txtCnpj));
         pnlMeio.add(txtCnpj);//adicionando o campo de texto configurado a janela
@@ -106,7 +129,7 @@ public class Principal extends JFrame {
 
         txtCnpjConvenio = new JTextField(14);
         txtCnpjConvenio.setText("22767849000128");
-        txtCnpjConvenio.setBounds(850,5,120,25);
+        txtCnpjConvenio.setBounds(850, 5, 120, 25);
         txtCnpjConvenio.addFocusListener(new SelecionarTexto(txtCnpjConvenio));
         txtCnpjConvenio.addKeyListener(new limitaTexto(14, txtCnpjConvenio));
         pnlMeio.add(txtCnpjConvenio);//adicionando o campo de texto configurado a janela
@@ -119,7 +142,7 @@ public class Principal extends JFrame {
         txtNumNfInicio.setText("70000");
         txtNumNfInicio.setBounds(700, 40, 70, 25);
         txtNumNfInicio.addFocusListener(new SelecionarTexto(txtNumNfInicio));
-        txtNumNfInicio.addKeyListener(new limitaTexto(7,txtNumNfInicio));
+        txtNumNfInicio.addKeyListener(new limitaTexto(7, txtNumNfInicio));
         pnlMeio.add(txtNumNfInicio);//adicionando o campo de texto configurado a janela
 
         lblNumNfFim = new JLabel("Fim:");//configurando o label
@@ -130,7 +153,7 @@ public class Principal extends JFrame {
         txtNumNfFim.setText("77000");
         txtNumNfFim.setBounds(810, 40, 70, 25);
         txtNumNfFim.addFocusListener(new SelecionarTexto(txtNumNfFim));
-        txtNumNfFim.addKeyListener(new limitaTexto(7,txtNumNfFim));
+        txtNumNfFim.addKeyListener(new limitaTexto(7, txtNumNfFim));
         pnlMeio.add(txtNumNfFim);//adicionando o campo de texto configurado a janela
 
         lblDtEmissao = new JLabel("Dias para data emissao:");//configurando o label
@@ -141,7 +164,7 @@ public class Principal extends JFrame {
         txtDtEmissao.setText("2");
         txtDtEmissao.setBounds(655, 70, 25, 25);
         txtDtEmissao.addFocusListener(new SelecionarTexto(txtDtEmissao));
-        txtDtEmissao.addKeyListener(new limitaTexto(2,txtDtEmissao));
+        txtDtEmissao.addKeyListener(new limitaTexto(2, txtDtEmissao));
         pnlMeio.add(txtDtEmissao);//adicionando o campo de texto configurado a janela
 
         lblValorTotalInicio = new JLabel("Range de Valor Total:");//configurando o label
@@ -152,7 +175,7 @@ public class Principal extends JFrame {
         txtValorTotalInicio.setText("200,53");
         txtValorTotalInicio.setBounds(655, 100, 120, 25);
         txtValorTotalInicio.addFocusListener(new SelecionarTexto(txtValorTotalInicio));
-        txtValorTotalInicio.addKeyListener(new limitaTexto(14,txtValorTotalInicio));
+        txtValorTotalInicio.addKeyListener(new limitaTexto(14, txtValorTotalInicio));
         pnlMeio.add(txtValorTotalInicio);//adicionando o campo de texto configurado a janela
 
         lblValorTotalFim = new JLabel("Fim:");//configurando o label
@@ -163,7 +186,7 @@ public class Principal extends JFrame {
         txtValorTotalFim.setText("15800,10");
         txtValorTotalFim.setBounds(825, 100, 120, 25);
         txtValorTotalFim.addFocusListener(new SelecionarTexto(txtValorTotalFim));
-        txtValorTotalFim.addKeyListener(new limitaTexto(14,txtValorTotalFim));
+        txtValorTotalFim.addKeyListener(new limitaTexto(14, txtValorTotalFim));
         pnlMeio.add(txtValorTotalFim);//adicionando o campo de texto configurado a janela
 
         lblDesconto = new JLabel("Desconto:");//configurando o label
@@ -174,7 +197,7 @@ public class Principal extends JFrame {
         txtDesconto.setText("0");
         txtDesconto.setBounds(655, 130, 120, 25);
         txtDesconto.addFocusListener(new SelecionarTexto(txtDesconto));
-        txtDesconto.addKeyListener(new limitaTexto(14,txtDesconto));
+        txtDesconto.addKeyListener(new limitaTexto(14, txtDesconto));
         pnlMeio.add(txtDesconto);//adicionando o campo de texto configurado a janela
 
         lblQtdeBoleto = new JLabel("Qtde de Boleto(s):");//configurando o label
@@ -185,50 +208,46 @@ public class Principal extends JFrame {
         txtQtdeBoleto.setText("0");
         txtQtdeBoleto.setBounds(655, 160, 25, 25);
         txtQtdeBoleto.addFocusListener(new SelecionarTexto(txtQtdeBoleto));
-        txtQtdeBoleto.addKeyListener(new limitaTexto(2,txtQtdeBoleto));
+        txtQtdeBoleto.addKeyListener(new limitaTexto(2, txtQtdeBoleto));
         pnlMeio.add(txtQtdeBoleto);//adicionando o campo de texto configurado a janela
 
-        lblXML = new JLabel("XML base");
-        lblXML.setBounds(15, 5, 350, 15);
-        pnlMeio.add(lblXML);
-
-        lblXMLEscolhido = new JLabel();
-        lblXMLEscolhido.setBounds(15, 20, 350, 15);
-        pnlMeio.add(lblXMLEscolhido);
-
-        txtXML = new JTextArea();
-        txtXML.setBorder(BorderFactory.createLineBorder(Color.black));
-        txtXML.setBounds(10, 40, 480, 550);
-        pnlMeio.add(txtXML);
-        scrlPnlTxtXml = new JScrollPane();
-
-        lblResultado = new JLabel("NF Gerada");
-        lblResultado.setBounds(700, 270, 150, 30);
+        lblResultado = new JLabel("NF Gerada (?)");
+        String resultadoToolTip = "<html>Selecione um XML base e clique em Gerar NF para ver o resultado aqui" +
+                "<br>Clique em Salvar resultado para armazenar o xml gerado</html>";
+        byte[] resultadoToolTipArr = resultadoToolTip.getBytes();
+        lblResultado.setToolTipText(resultadoToolTip);
+        lblResultado.setBounds(510, 190, 150, 30);
         pnlMeio.add(lblResultado);
+
         txtResultado = new JTextArea();
-        txtResultado.setBorder(BorderFactory.createLineBorder(Color.black));
-        txtResultado.setBounds(690, 300, 400, 280);
+        txtResultado.setBorder(BorderFactory.createLineBorder(Color.white));
+        txtResultado.setBounds(510, 220, 580, 360);
+        txtResultado.setForeground(new Color(255, 255, 255));
+        txtResultado.setBackground(new Color(50, 50, 50));
+
+        txtResultado.setToolTipText(new String(resultadoToolTipArr, StandardCharsets.UTF_8));
         pnlMeio.add(txtResultado);
+        mudarCorDeFundoDosJFieldTexts(pnlMeio, temaBgText, temaTxt);
 
         pnlBot = new JPanel();
         pnlBot.setLayout(null);
-        pnlBot.setBounds(0, 626, 1120, 35);
-        pnlBot.setBackground(new Color(50, 240, 240));
+        pnlBot.setBounds(0, 629, 1120, 35);
+        pnlBot.setBackground(new Color(20, 20, 20));
 
         lblData = new JLabel();
-        lblData.setBounds(10, 2, 250, 30);
+        lblData.setBounds(10, 4, 250, 25);
         pnlBot.add(lblData);
 
         lblPagamento = new JLabel();
-        lblPagamento.setBounds(210, 2, 250, 30);
+        lblPagamento.setBounds(210, 4, 250, 20);
         pnlBot.add(lblPagamento);
 
         lblNumProposta = new JLabel();
-        lblNumProposta.setBounds(480, 2, 200, 30);
+        lblNumProposta.setBounds(480, 4, 200, 20);
         pnlBot.add(lblNumProposta);
 
         btnAtualizar = new JButton("Gerar NF");
-        btnAtualizar.setBounds(640, 2, 50, 28);
+        btnAtualizar.setBounds(860, 4, 80, 20);
         btnAtualizar.addActionListener(new Atualizar());
         btnAtualizar.setEnabled(false);
         String f5ToolTip = "<html>Preencha o CPF e Numero da proposta, então atualize." +
@@ -238,21 +257,21 @@ public class Principal extends JFrame {
         pnlBot.add(btnAtualizar);
 
         btnSalvarResultado = new JButton("Salvar Resultado");
-        btnSalvarResultado.setBounds(695, 2, 130, 28);
+        btnSalvarResultado.setBounds(950, 4, 140, 20);
         btnSalvarResultado.addActionListener(new Salvar());
         btnSalvarResultado.setEnabled(false);
         pnlBot.add(btnSalvarResultado);
 
+
         pnlGeral.add(pnlTopo);
         pnlGeral.add(pnlMeio);
         pnlGeral.add(pnlBot);
-        //pnlGeral.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         pnlGeral.setVisible(true);
 
 
-
     }
-    private static int getContaProposta(Node parentNode,String proposta) {
+
+    private static int getContaProposta(Node parentNode, String proposta) {
         int qtdEx = 0;
         NodeList nList = (NodeList) parentNode.getParentNode();
 
@@ -271,6 +290,7 @@ public class Principal extends JFrame {
 
         return qtdEx;
     }
+
     public void lerXml(String arquivo) {
         String valor = "";
         String invoice = "";
@@ -280,28 +300,21 @@ public class Principal extends JFrame {
         try {
             txtResultado.setText("");
             File file = new File(arquivo);
-            // Create a new XML document.
+
             DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = fabrica.newDocumentBuilder();
             Document doc = db.parse(file);
 
-            // Create a transformer factory.
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
-
-            // Create a transformer.
             Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // Define o tamanho da indentação (2 espaços)
 
-            // Set the output format for the transformer.
-            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-            // Create a string writer.
             StringWriter stringWriter = new StringWriter();
 
             // Write the XML document to the string writer.
             transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
-
-            // Get the string representation of the XML document.
-            String xmlData = stringWriter.toString();
+            String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
             /*
             // Print the XML data.
             System.out.println(xmlData);
@@ -412,7 +425,7 @@ public class Principal extends JFrame {
                 }
             };
             btnAtualizar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F5"), "apertaF5");
-            btnAtualizar.getActionMap().put("apertaF5",apertaF5);
+            btnAtualizar.getActionMap().put("apertaF5", apertaF5);
 
             btnSalvarResultado.setEnabled(true);
         } catch (Exception e) {
@@ -420,10 +433,32 @@ public class Principal extends JFrame {
         }
     }
 
+    private static void mudarCorDeFundoDosJFieldTexts(Container container, Color backgroundColor, Color textColor) {
+        for (Component component : container.getComponents()) {
+            if (component instanceof JTextField) {
+                JTextField textField = (JTextField) component;
+                textField.setBackground(backgroundColor);
+                textField.setForeground(textColor);
+                Border lineBorder = BorderFactory.createLineBorder(new Color(100, 100, 100));
+                Border paddedBorder = BorderFactory.createEmptyBorder(0, 4, 0, 0);
+                textField.setBorder(BorderFactory.createCompoundBorder(lineBorder, paddedBorder));
+
+            } else if (component instanceof Container) {
+                mudarCorDeFundoDosJFieldTexts((Container) component, backgroundColor, textColor);
+            }
+        }
+    }
+
     public String getNumeroNf(int min, int max) {
         Random rand = new Random();
         return String.valueOf(rand.nextInt(max - min + 1) + min);
     }
+
+    public String getValorTotal(double min, double max) {
+        Random rand = new Random();
+        return String.valueOf(rand.nextDouble() * (max - min) + min).replace("\\.", ",");
+    }
+
     public static String getDataEmissao(int dias) {
         LocalDateTime agora = LocalDateTime.now();
         LocalDateTime emissionDateTime = agora.minusDays(dias);
@@ -443,13 +478,13 @@ public class Principal extends JFrame {
             fcSalvar.setDialogTitle("Salve o XML");
 
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
-            arquivoSalvo = "NF_" +  txtNumNfInicio.getText() +
-                    "_TESTE-" +dtf.format(LocalDateTime.now()) + ".xml";
+            arquivoSalvo = "NF_" + txtNumNfInicio.getText() +
+                    "_TESTE-" + dtf.format(LocalDateTime.now()) + ".xml";
 
             fcSalvar.setSelectedFile(new File(arquivoSalvo));
             int salvo = fcSalvar.showSaveDialog(Principal.this);
 
-            if(salvo == 0){
+            if (salvo == 0) {
                 PrintWriter pw;
 
                 try {
@@ -476,13 +511,16 @@ public class Principal extends JFrame {
     public class SelecionarTexto implements FocusListener {
 
         private JTextField campoAlvo;
+
         public SelecionarTexto(JTextField campoAlvo) {
             this.campoAlvo = campoAlvo;
         }
+
         @Override
-        public void focusGained(FocusEvent e){
+        public void focusGained(FocusEvent e) {
             campoAlvo.selectAll();
         }
+
         @Override
         public void focusLost(FocusEvent e) {
 
@@ -507,20 +545,22 @@ public class Principal extends JFrame {
             }
         }
     }
+
     public class limitaTexto implements KeyListener {
         private int tamanho;
         private JTextField campoAlvo;
+
         public limitaTexto(int tamanho, JTextField campoAlvo) {
             this.tamanho = tamanho;
             this.campoAlvo = campoAlvo;
         }
+
         @Override
         public void keyTyped(KeyEvent e) {
             System.out.println(getDataEmissao(2));
-            if (campoAlvo.getSelectedText() != null && campoAlvo.getSelectedText().length() == tamanho){
+            if (campoAlvo.getSelectedText() != null && campoAlvo.getSelectedText().length() == tamanho) {
                 campoAlvo.setText("");
-            }
-            else if (campoAlvo.getText().length() >= tamanho) // limitar a quantidade de caracteres na chamada
+            } else if (campoAlvo.getText().length() >= tamanho) // limitar a quantidade de caracteres na chamada
                 e.consume();
         }
 
@@ -538,7 +578,7 @@ public class Principal extends JFrame {
                     String textoColado = (String) transferable.getTransferData(DataFlavor.stringFlavor);
 
                     if (textoColado.length() > tamanho) {
-                        campoAlvo.setText(textoColado.replaceAll("\\.","").replaceAll("\\-","").replaceAll("/","").substring(0,tamanho));
+                        campoAlvo.setText(textoColado.replaceAll("\\.", "").replaceAll("\\-", "").replaceAll("/", "").substring(0, tamanho));
                     }
                 } catch (UnsupportedFlavorException | IOException ex) {
                     ex.printStackTrace();
