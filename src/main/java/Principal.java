@@ -1,4 +1,7 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -18,11 +21,18 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -33,6 +43,7 @@ public class Principal extends JFrame {
     private String arq;
 
     public static void main(String[] args) {
+
         Principal ok = new Principal();
         ok.setVisible(true);
     }
@@ -45,23 +56,21 @@ public class Principal extends JFrame {
         this.arq = arq;
     }
 
-    Color temaTxt = Color.white;
-    Color temaBgText = new Color(50, 50, 50);
-    Color temaBordaTxtArea = Color.white;
-
     //declarando componentes
     JPanel pnlGeral, pnlTopo, pnlMeio, pnlBot;
-    JLabel lblCnpj, lblConvenio, lblNumNFInicio, lblNumNfFim, lblDtEmissao, lblValorTotalInicio, lblValorTotalFim, lblDesconto,
-            lblQtdeBoleto, lblXML, lblXMLEscolhido,
+    JLabel lblCnpj, lblConvenio, lblSufixoChaveNf,lblNumNFInicio, lblNumNfFim,lblNumNfGerado,
+            lblDtEmissaoInicio, lblDtEmissaoFim, lblDtEmissaoGerada, lblValorTotalInicio, lblValorTotalFim, lblValorTotalGerado,
+            lblDesconto, lblQtdeBoleto, lblXML, lblXMLEscolhido,
             lblResultado, lblData, lblPagamento, lblNumProposta;
     JTextArea txtXML, txtResultado;
-    JTextField txtCnpj, txtCnpjConvenio, txtNumNfInicio, txtNumNfFim, txtDtEmissao, txtValorTotalInicio, txtValorTotalFim,
-            txtDesconto, txtQtdeBoleto;
-    JButton btnChoose, btnSalvarResultado, btnAtualizar;
-    JScrollPane scrlPnlTxtXml;
+    JTextField txtCnpj, txtCnpjConvenio,txtSufixoChaveNf, txtNumNfInicio, txtNumNfFim, txtDtEmissaoInicio, txtDtEmissaoFim,
+            txtValorTotalInicio, txtValorTotalFim, txtDesconto, txtQtdeBoleto;
+    JButton btnChoose, btnSalvarResultado, btnGerarNf;
+    JScrollPane scrlPnlTxtXml, scrlPnlTxtResultado;
     ImageIcon dolar;
-
+    Color temaText, temaTextBg, temaTxtAreaBorda,temaTxtAreaBg,  temaFaixaInferior, temaFaixaSuperior, temaFaixaMeio;
     public Principal() {
+        tema();
 
         setTitle("Gerador de NFs");//definindo o titulo da janela
         setSize(1120, 700);
@@ -69,11 +78,9 @@ public class Principal extends JFrame {
 
         //definindo operação padrão para o botão fechar
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//sem esta linha a janela não fecha pelo botão fechar
-        //dolar = new ImageIcon(Toolkit.getDefaultToolkit().getImage("src\\main\\resources\\dolar.jpg"));
+
         String pathname = "src/main/resources/dolar.jpg";
-        //File file=new File(pathname);
-        //InputStream image = this.getClass().getResourceAsStream("src\\main\\resources\\dolar.jpg");
-        //System.out.println(image);
+
         dolar = new ImageIcon(pathname);
         setIconImage(dolar.getImage());
 
@@ -83,7 +90,7 @@ public class Principal extends JFrame {
 
         pnlTopo = new JPanel();
         pnlTopo.setBounds(0, 0, 1120, 35);
-        pnlTopo.setBackground(new Color(20, 20, 20));
+        pnlTopo.setBackground(temaFaixaSuperior);
 
         btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
         pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
@@ -93,8 +100,7 @@ public class Principal extends JFrame {
         pnlMeio = new JPanel();
         pnlMeio.setLayout(null);
         pnlMeio.setBounds(0, 35, 1180, 594);
-        pnlMeio.setBackground(new Color(200, 200, 240));
-
+        pnlMeio.setBackground(temaFaixaMeio);
 
         lblXML = new JLabel("XML base");
         lblXML.setBounds(15, 5, 350, 15);
@@ -105,9 +111,9 @@ public class Principal extends JFrame {
         pnlMeio.add(lblXMLEscolhido);
 
         txtXML = new JTextArea();
-        txtXML.setBorder(BorderFactory.createLineBorder(temaBordaTxtArea));
-        txtXML.setForeground(new Color(255, 255, 255));
-        txtXML.setBackground(new Color(50, 50, 50));
+        txtXML.setBorder(BorderFactory.createLineBorder(temaTxtAreaBorda));
+        txtXML.setForeground(temaText);
+        txtXML.setBackground(temaTxtAreaBg);
         txtXML.setBounds(10, 40, 480, 540);
         pnlMeio.add(txtXML);
         scrlPnlTxtXml = new JScrollPane();
@@ -134,105 +140,146 @@ public class Principal extends JFrame {
         txtCnpjConvenio.addKeyListener(new limitaTexto(14, txtCnpjConvenio));
         pnlMeio.add(txtCnpjConvenio);//adicionando o campo de texto configurado a janela
 
+        lblSufixoChaveNf = new JLabel("Sufixo para Chave Nf:");//configurando o label
+        lblSufixoChaveNf.setBounds(510, 40, 200, 25);
+        pnlMeio.add(lblSufixoChaveNf);//adicionando o label configurado a janela
+
+        txtSufixoChaveNf = new JTextField(7);
+        txtSufixoChaveNf.setText("30583210001");
+        txtSufixoChaveNf.setBounds(640, 40, 120, 25);
+        String sufixoToolTip = "<html>Valor que será utilizado no fim da ChNFe para criar a nova NF</html>" +
+                "<br>Clique em Salvar resultado para armazenar o xml gerado</html>";
+        byte[] sufixoToolTipArr = sufixoToolTip.getBytes();
+        txtSufixoChaveNf.setToolTipText(new String(sufixoToolTipArr, StandardCharsets.UTF_8));
+        txtSufixoChaveNf.addFocusListener(new SelecionarTexto(txtSufixoChaveNf));
+        txtSufixoChaveNf.addKeyListener(new limitaTexto(12, txtSufixoChaveNf));
+        pnlMeio.add(txtSufixoChaveNf);//adicionando o campo de texto configurado a janela
+
+        lblDtEmissaoInicio = new JLabel("Range de dias para data emissao:");//configurando o label
+        lblDtEmissaoInicio.setBounds(510, 70, 210, 25);
+        pnlMeio.add(lblDtEmissaoInicio);//adicionando o label configurado a janela
+
+        txtDtEmissaoInicio = new JTextField(7);
+        txtDtEmissaoInicio.setText("3");
+        txtDtEmissaoInicio.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtDtEmissaoInicio.setBounds(745, 70, 30, 25);
+        txtDtEmissaoInicio.addFocusListener(new SelecionarTexto(txtDtEmissaoInicio));
+        txtDtEmissaoInicio.addKeyListener(new limitaTexto(3, txtDtEmissaoInicio));
+        pnlMeio.add(txtDtEmissaoInicio);//adicionando o campo de texto configurado a janela
+
+        lblDtEmissaoFim = new JLabel("a");//configurando o label
+        lblDtEmissaoFim.setBounds(790, 70, 30, 25);
+        pnlMeio.add(lblDtEmissaoFim);//adicionando o label configurado a janela
+
+        txtDtEmissaoFim = new JTextField(7);
+        txtDtEmissaoFim.setText("180");
+        txtDtEmissaoFim.setBounds(815, 70, 30, 25);
+        txtDtEmissaoFim.addFocusListener(new SelecionarTexto(txtDtEmissaoFim));
+        txtDtEmissaoFim.addKeyListener(new limitaTexto(3, txtDtEmissaoFim));
+        pnlMeio.add(txtDtEmissaoFim);//adicionando o campo de texto configurado a janela
+
+        lblDtEmissaoGerada = new JLabel();//configurando o label
+        lblDtEmissaoGerada.setBounds(950, 70, 120, 25);
+        pnlMeio.add(lblDtEmissaoGerada);//adicionando o label configurado a janela
+
         lblNumNFInicio = new JLabel("Range de Numero da NF > Inicio:");//configurando o label
-        lblNumNFInicio.setBounds(510, 40, 200, 25);
+        lblNumNFInicio.setBounds(510, 100, 190, 25);
         pnlMeio.add(lblNumNFInicio);//adicionando o label configurado a janela
 
         txtNumNfInicio = new JTextField(7);//configurando o campo de texto pro tamanho 8
         txtNumNfInicio.setText("70000");
-        txtNumNfInicio.setBounds(700, 40, 70, 25);
+        txtNumNfInicio.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtNumNfInicio.setBounds(705, 100, 70, 25);
         txtNumNfInicio.addFocusListener(new SelecionarTexto(txtNumNfInicio));
         txtNumNfInicio.addKeyListener(new limitaTexto(7, txtNumNfInicio));
         pnlMeio.add(txtNumNfInicio);//adicionando o campo de texto configurado a janela
 
-        lblNumNfFim = new JLabel("Fim:");//configurando o label
-        lblNumNfFim.setBounds(775, 40, 50, 25);
+        lblNumNfFim = new JLabel("a");//configurando o label
+        lblNumNfFim.setBounds(790, 100, 30, 25);
         pnlMeio.add(lblNumNfFim);//adicionando o label configurado a janela
 
         txtNumNfFim = new JTextField(7);
         txtNumNfFim.setText("77000");
-        txtNumNfFim.setBounds(810, 40, 70, 25);
+        txtNumNfFim.setBounds(815, 100, 70, 25);
         txtNumNfFim.addFocusListener(new SelecionarTexto(txtNumNfFim));
         txtNumNfFim.addKeyListener(new limitaTexto(7, txtNumNfFim));
         pnlMeio.add(txtNumNfFim);//adicionando o campo de texto configurado a janela
 
-        lblDtEmissao = new JLabel("Dias para data emissao:");//configurando o label
-        lblDtEmissao.setBounds(510, 70, 140, 25);
-        pnlMeio.add(lblDtEmissao);//adicionando o label configurado a janela
-
-        txtDtEmissao = new JTextField(7);
-        txtDtEmissao.setText("2");
-        txtDtEmissao.setBounds(655, 70, 25, 25);
-        txtDtEmissao.addFocusListener(new SelecionarTexto(txtDtEmissao));
-        txtDtEmissao.addKeyListener(new limitaTexto(2, txtDtEmissao));
-        pnlMeio.add(txtDtEmissao);//adicionando o campo de texto configurado a janela
+        lblNumNfGerado = new JLabel();//configurando o label
+        lblNumNfGerado.setBounds(950, 100, 120, 25);
+        pnlMeio.add(lblNumNfGerado);//adicionando o label configurado a janela
 
         lblValorTotalInicio = new JLabel("Range de Valor Total:");//configurando o label
-        lblValorTotalInicio.setBounds(510, 100, 140, 25);
+        lblValorTotalInicio.setBounds(510, 130, 140, 25);
         pnlMeio.add(lblValorTotalInicio);//adicionando o label configurado a janela
 
         txtValorTotalInicio = new JTextField(7);
         txtValorTotalInicio.setText("200,53");
-        txtValorTotalInicio.setBounds(655, 100, 120, 25);
+        txtValorTotalInicio.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtValorTotalInicio.setBounds(655, 130, 120, 25);
         txtValorTotalInicio.addFocusListener(new SelecionarTexto(txtValorTotalInicio));
         txtValorTotalInicio.addKeyListener(new limitaTexto(14, txtValorTotalInicio));
         pnlMeio.add(txtValorTotalInicio);//adicionando o campo de texto configurado a janela
 
-        lblValorTotalFim = new JLabel("Fim:");//configurando o label
-        lblValorTotalFim.setBounds(780, 100, 40, 25);
+        lblValorTotalFim = new JLabel("a");//configurando o label
+        lblValorTotalFim.setBounds(790, 130, 30, 25);
         pnlMeio.add(lblValorTotalFim);//adicionando o label configurado a janela
 
         txtValorTotalFim = new JTextField(7);
         txtValorTotalFim.setText("15800,10");
-        txtValorTotalFim.setBounds(825, 100, 120, 25);
+        txtValorTotalFim.setBounds(815, 130, 120, 25);
         txtValorTotalFim.addFocusListener(new SelecionarTexto(txtValorTotalFim));
         txtValorTotalFim.addKeyListener(new limitaTexto(14, txtValorTotalFim));
         pnlMeio.add(txtValorTotalFim);//adicionando o campo de texto configurado a janela
 
-        lblDesconto = new JLabel("Desconto:");//configurando o label
-        lblDesconto.setBounds(510, 130, 140, 25);
-        pnlMeio.add(lblDesconto);//adicionando o label configurado a janela
-
-        txtDesconto = new JTextField(7);
-        txtDesconto.setText("0");
-        txtDesconto.setBounds(655, 130, 120, 25);
-        txtDesconto.addFocusListener(new SelecionarTexto(txtDesconto));
-        txtDesconto.addKeyListener(new limitaTexto(14, txtDesconto));
-        pnlMeio.add(txtDesconto);//adicionando o campo de texto configurado a janela
+        lblValorTotalGerado = new JLabel();//configurando o label
+        lblValorTotalGerado.setBounds(950, 130, 120, 25);
+        pnlMeio.add(lblValorTotalGerado);//adicionando o label configurado a janela
 
         lblQtdeBoleto = new JLabel("Qtde de Boleto(s):");//configurando o label
-        lblQtdeBoleto.setBounds(510, 160, 140, 25);
+        lblQtdeBoleto.setBounds(510, 160, 110, 25);
         pnlMeio.add(lblQtdeBoleto);//adicionando o label configurado a janela
 
         txtQtdeBoleto = new JTextField(7);
-        txtQtdeBoleto.setText("0");
-        txtQtdeBoleto.setBounds(655, 160, 25, 25);
+        txtQtdeBoleto.setText("1");
+        txtQtdeBoleto.setBounds(625, 160, 25, 25);
         txtQtdeBoleto.addFocusListener(new SelecionarTexto(txtQtdeBoleto));
         txtQtdeBoleto.addKeyListener(new limitaTexto(2, txtQtdeBoleto));
         pnlMeio.add(txtQtdeBoleto);//adicionando o campo de texto configurado a janela
+
+        lblDesconto = new JLabel("Desconto:");//configurando o label
+        lblDesconto.setBounds(660, 160, 60, 25);
+        pnlMeio.add(lblDesconto);//adicionando o label configurado a janela
+
+        txtDesconto = new JTextField(7);
+        txtDesconto.setText("0,0");
+        txtDesconto.setBounds(725, 160, 120, 25);
+        txtDesconto.addFocusListener(new SelecionarTexto(txtDesconto));
+        txtDesconto.addKeyListener(new limitaTexto(14, txtDesconto));
+        pnlMeio.add(txtDesconto);//adicionando o campo de texto configurado a janela
 
         lblResultado = new JLabel("NF Gerada (?)");
         String resultadoToolTip = "<html>Selecione um XML base e clique em Gerar NF para ver o resultado aqui" +
                 "<br>Clique em Salvar resultado para armazenar o xml gerado</html>";
         byte[] resultadoToolTipArr = resultadoToolTip.getBytes();
-        lblResultado.setToolTipText(resultadoToolTip);
+        lblResultado.setToolTipText(new String(resultadoToolTipArr, StandardCharsets.UTF_8));
         lblResultado.setBounds(510, 190, 150, 30);
         pnlMeio.add(lblResultado);
 
         txtResultado = new JTextArea();
-        txtResultado.setBorder(BorderFactory.createLineBorder(Color.white));
         txtResultado.setBounds(510, 220, 580, 360);
-        txtResultado.setForeground(new Color(255, 255, 255));
-        txtResultado.setBackground(new Color(50, 50, 50));
-
+        txtResultado.setBorder(BorderFactory.createLineBorder(temaTxtAreaBorda));
+        txtResultado.setForeground(temaText);
+        txtResultado.setBackground(temaTxtAreaBg);
         txtResultado.setToolTipText(new String(resultadoToolTipArr, StandardCharsets.UTF_8));
         pnlMeio.add(txtResultado);
-        mudarCorDeFundoDosJFieldTexts(pnlMeio, temaBgText, temaTxt);
+        scrlPnlTxtResultado = new JScrollPane();
+        mudarCorDeFundoDosJFieldTexts(pnlMeio, temaTextBg, temaText);
 
         pnlBot = new JPanel();
         pnlBot.setLayout(null);
         pnlBot.setBounds(0, 629, 1120, 35);
-        pnlBot.setBackground(new Color(20, 20, 20));
+        pnlBot.setBackground(temaFaixaInferior);
 
         lblData = new JLabel();
         lblData.setBounds(10, 4, 250, 25);
@@ -246,61 +293,119 @@ public class Principal extends JFrame {
         lblNumProposta.setBounds(480, 4, 200, 20);
         pnlBot.add(lblNumProposta);
 
-        btnAtualizar = new JButton("Gerar NF");
-        btnAtualizar.setBounds(860, 4, 80, 20);
-        btnAtualizar.addActionListener(new Atualizar());
-        btnAtualizar.setEnabled(false);
+        btnGerarNf = new JButton("Gerar NF");
+        btnGerarNf.setBounds(850, 4, 90, 25);
+        btnGerarNf.addActionListener(new gerarNf());
+        btnGerarNf.setEnabled(false);
         String f5ToolTip = "<html>Preencha o CPF e Numero da proposta, então atualize." +
                 "<br>(este botão fica ativo após escolher um arquivo.)</html>";
         byte[] f5ToolTipArr = f5ToolTip.getBytes();
-        btnAtualizar.setToolTipText(new String(f5ToolTipArr, StandardCharsets.UTF_8));
-        pnlBot.add(btnAtualizar);
+        btnGerarNf.setToolTipText(new String(f5ToolTipArr, StandardCharsets.UTF_8));
+        pnlBot.add(btnGerarNf);
 
         btnSalvarResultado = new JButton("Salvar Resultado");
-        btnSalvarResultado.setBounds(950, 4, 140, 20);
+        btnSalvarResultado.setBounds(950, 4, 140, 25);
         btnSalvarResultado.addActionListener(new Salvar());
         btnSalvarResultado.setEnabled(false);
         pnlBot.add(btnSalvarResultado);
-
 
         pnlGeral.add(pnlTopo);
         pnlGeral.add(pnlMeio);
         pnlGeral.add(pnlBot);
         pnlGeral.setVisible(true);
 
-
+    }
+    public void tema(){
+        temaText = Color.black;
+        temaTextBg = new Color(255, 255, 255);
+        temaTxtAreaBorda = new Color(37, 37, 37);
+        temaTxtAreaBg = new Color(255, 255, 255);
+        temaFaixaInferior = new Color(0, 170, 220);
+        temaFaixaMeio = new Color(250, 250, 250);
+        temaFaixaSuperior = new Color(110, 195, 150);
     }
 
-    private static int getContaProposta(Node parentNode, String proposta) {
-        int qtdEx = 0;
-        NodeList nList = (NodeList) parentNode.getParentNode();
-
-        for (int i = 0; i < nList.getLength(); i++) {
-            Node n = nList.item(i);
-
-            String propostaNo = n.getTextContent();
-            if (propostaNo == null)
-                propostaNo = "";
-            if (proposta == null)
-                proposta = "";
-            if (propostaNo.contains(proposta)) {
-                qtdEx++;
+    public String criarSufixo() throws IOException {
+        File file = new File("src/main/resources/sufixoChaveNf2.json");
+        if (!Files.exists(file.toPath())) {
+            try {
+                Files.createFile(file.toPath());
+                String sufixo = "{\"sufixoChaveNf\": \""  + txtSufixoChaveNf.getText() +"\"}";
+                System.out.println(sufixo);
+                Files.write(file.toPath(), sufixo.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
+        String jsonFilePath = "src/main/resources/sufixoChaveNf2.json";
+        // Ler o conteúdo do arquivo JSON
+        String jsonContent = readFileAsString(jsonFilePath);
 
-        return qtdEx;
+        // Converter o conteúdo em um objeto JSON
+        JSONObject jsonObject = new JSONObject(jsonContent);
+
+        // Obter o array de amigos
+        JSONArray sufixoArray = jsonObject.getJSONArray("sufixoChaveNf");
+
+        // Criar um novo objeto JSON para o novo amigo
+        JSONObject novoSufixo = new JSONObject();
+        novoSufixo.put("sufixoChaveNf", sufixoArray.length() + 1);
+
+
+        // Adicionar o novo amigo ao array existente de amigos
+        sufixoArray.put(novoSufixo);
+
+        // Atualizar o objeto JSON com o array de amigos modificado
+        jsonObject.put("sufixoChaveNf", sufixoArray);
+
+        // Escrever o conteúdo atualizado de volta no arquivo JSON
+        String jsonString = jsonObject.toString();
+        Files.write(Paths.get(jsonFilePath), jsonString.getBytes(StandardCharsets.UTF_8));
+        return jsonFilePath;
     }
+    public static String atualizarSufixo() throws IOException {
+        String arquivoJson = "src/main/resources/sufixoChaveNf.json";
+        Path path = Paths.get(arquivoJson);
+        String sufixo = new String("Files.readAllBytes(path)");
 
+
+// De-serialize to an object
+       // Person user = mapper.readValue("{\"name\": \"John\"}", Person.class);
+        //System.out.println(user.name); //John
+
+// Read a single attribute
+/*
+        Map<String, String> map = new HashMap<>();
+        // Parse the JSON string into a map
+        //JsonObject jsonObject =  new JsonParser().parse(arquivoJson).getAsJsonObject();
+
+        // Get the value of the "sufixoChaveNf" key
+        String sufixoChaveNf = jsonObject.get("sufixoChaveNf").getAsString();
+
+        // Add the key-value pair to the map
+        map.put("sufixoChaveNf", sufixoChaveNf);
+
+        // Print the map
+        System.out.println(map);
+        int novoSufixo = Integer.parseInt((String) map.get("sufixoChaveNf"));
+        /*System.out.println(novoSufixo);
+        novoSufixo++;
+
+        System.out.println(novoSufixo);
+
+        // Atualiza o valor da chave "sufixoChaveNf"
+        map.put("sufixoChaveNf", String.valueOf(novoSufixo));
+
+        // Grava o arquivo JSON atualizado
+        String json = new Gson().toJson(map);
+        Files.write(path, json.getBytes());*/
+        return String.valueOf(sufixo);
+    }
     public void lerXml(String arquivo) {
-        String valor = "";
-        String invoice = "";
-        String apoliceNum = "";
-        StringBuilder dataTransacao = new StringBuilder();
-        String modoPagamento = "";
         try {
             txtResultado.setText("");
-            File file = new File(arquivo);
 
+            File file = new File(arquivo);
             DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = fabrica.newDocumentBuilder();
             Document doc = db.parse(file);
@@ -312,124 +417,137 @@ public class Principal extends JFrame {
 
             StringWriter stringWriter = new StringWriter();
 
-            // Write the XML document to the string writer.
             transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
             String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
-            /*
-            // Print the XML data.
-            System.out.println(xmlData);
 
-
-            NodeList nodeList = doc.getElementsByTagName("ledgerJournalTrans");
-            Node nodeJournal = nodeList.item(0);
-
-            OutputFormat format = new OutputFormat(doc);    // Serialize DOM
-            format.setIndenting(true);
-            format.setIndent(6);
-            StringWriter stringOut = new StringWriter();    // Write to a String
-            XMLSerializer serial = new XMLSerializer(stringOut, format);
-            serial.asDOMSerializer();  // As a DOM Serializer
-            serial.serialize(doc.getDocumentElement());
-            String xmlData = stringOut.toString();
-            */
             txtXML.setText(xmlData);
+            txtXML.setCaretPosition(0);
             scrlPnlTxtXml.setViewportView(txtXML);
             scrlPnlTxtXml.setBounds(10, 40, 482, 550);
             pnlMeio.add(scrlPnlTxtXml);
-/*
-            Node invoiceNode = doc.getElementsByTagName("nNF").item(0);
-            Node newInvoiceNode = doc.createElement("nNF");
-            newInvoiceNode.setTextContent(getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()),Integer.parseInt(txtNumNfFim.getText())));
 
-            doc.replaceChild(invoiceNode, newInvoiceNode);
-            System.out.println(doc.getNodeValue());
-
-            for (int i = 0; i < nodeList.getLength(); i++) {
-                Element contemApolice = (Element) nodeList.item(i);
-
-                if (contemApolice.getTextContent().contains(txtProposta.getText())) {
-                    //JOptionPane.showMessageDialog( null, contemApolice.getElementsByTagName("Invoice").toString());
-                    NodeList nodeDaProposta = contemApolice.getChildNodes();
-
-                    //JOptionPane.showMessageDialog( null, nodeDaProposta.getLength());
-                    for (int j = 0; j < nodeDaProposta.getLength(); j++) {
-                        Node nodeAtual =  nodeDaProposta.item(j);
-
-                        //JOptionPane.showMessageDialog( null, nodeAtual.getParentNode().getNodeName());
-                        if (nodeAtual.getNodeName().equals("nDup"))
-                            valor = nodeAtual.getTextContent();
-                        if (nodeAtual.getNodeName().equals("Invoice"))
-                            invoice = nodeAtual.getTextContent();
-                        if (nodeAtual.getNodeName().equals("apolice"))
-                            apoliceNum = nodeAtual.getTextContent();
-                        if (nodeAtual.getNodeName().equals("PaymMode"))
-                            modoPagamento = nodeAtual.getTextContent();
-                        if (nodeAtual.getNodeName().equals("TransDate"))
-                            dataTransacao = new StringBuilder(nodeAtual.getTextContent());
-
-                        //System.out.println(nodeAtual.getTagName() + " : " + nodeAtual.getTextContent());
-                    }
-
-                    txtResultado.setText("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                            "<ledgerJournalStatus>\n" +
-                            "      <ledgerJournalTrans>\n" +
-                            "            <dataAreaId>04</dataAreaId>\n" +
-                            "            <fiscalEstablishment>001</fiscalEstablishment>\n" +
-                            "            <invoiceId>" + invoice + "</invoiceId>\n" +
-                            "            <salesId>" + invoice + "</salesId>\n" +
-                            "            <cnpjcpfNum>" + txtCnpj.getText() + "</cnpjcpfNum>\n" +
-                            "            <transDate>06/10/2021</transDate>\n" +
-                            "            <paymentStatus>3</paymentStatus>\n" +
-                            "            <finInterestAmountCur>0.0000</finInterestAmountCur>\n" +
-                            "            <amountCurDebit>" + valor + "</amountCurDebit>\n" +
-                            "            <amountCur>" + valor + "</amountCur>\n" +
-                            "            <cashDiscAmount>0.00</cashDiscAmount>\n" +
-                            "            <voucher>SEGCTPA_000" + invoice + "</voucher>\n" +
-                            "            <paymMode>BOL_SAN240</paymMode>\n" +
-                            "            <vl_multa>0.0000</vl_multa>\n" +
-                            "            <dv_nao_envia_interface>0</dv_nao_envia_interface>\n" +
-                            "            <Apolice>" + apoliceNum + "</Apolice>\n" +
-                            "            <Parcela>1</Parcela>\n" +
-                            "      </ledgerJournalTrans>\n" +
-                            "</ledgerJournalStatus>");
-                    lblPagamento.setText("Modo de pagamento: " + modoPagamento);
-                    dataTransacao.insert(0, "Data da Transação: ");
-
-                    byte[] dataT = dataTransacao.toString().getBytes();
-                    lblData.setText(new String(dataT, StandardCharsets.UTF_8));
-
-                    lblNumProposta.setText("Proposta \n" + (i+1) + "/" + nodeList.getLength());
-                    int props = getContaProposta(nodeJournal,txtProposta.getText());
-                   // System.out.println("numero de props " + props);
-                    if(props >1 && !Objects.equals(txtProposta.getText(), " ")){
-                        String cont = "<html>Foram encontradas "+props+" propostas"+
-                                " no XML, deseja <br>continuar com a atual?<br>(O valor em amountCur e data transação<br> podem indicar a proposta correta)</html>";
-                        byte[] contUTF = cont.getBytes();
-                        int continua = JOptionPane.showConfirmDialog(null,new String(contUTF, StandardCharsets.UTF_8) , "Confirmacao de proposta",
-                                JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                        if(continua == 0)
-                            break;
-
-                    }
-                    else
-                            break;
-                } else {
-                    txtResultado.setText("Proposta nao encontrada");
-                }
-            }*/
-            btnAtualizar.setEnabled(true);
-            Action apertaF5 = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    lerXml(getArq());
-                }
-            };
-            btnAtualizar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F5"), "apertaF5");
-            btnAtualizar.getActionMap().put("apertaF5", apertaF5);
-
+            System.out.println(criarSufixo());
+            btnGerarNf.setEnabled(true);
             btnSalvarResultado.setEnabled(true);
         } catch (Exception e) {
             System.out.println("msg excecao: " + e);
+        }
+    }
+    public class gerarNf implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
+            if(Integer.parseInt(txtNumNfInicio.getText()) > Integer.parseInt(txtNumNfFim.getText())  ){
+                JOptionPane.showMessageDialog(null, "O valor limite para o numero da NF deve ser menor que o inicial", "Erro com o Fim do Range de numero de Nf", JOptionPane.INFORMATION_MESSAGE);
+
+                txtResultado.setText("");
+            }
+            try {
+                txtResultado.setText("");
+                File file = new File(getArq());
+
+                DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = fabrica.newDocumentBuilder();
+                Document doc = db.parse(file);
+
+                // Obter o elemento <CNPJ> dentro do elemento <emit>
+                NodeList emitCnpjList = doc.getElementsByTagName("emit");
+                Element emitElement = (Element) emitCnpjList.item(0);
+                NodeList emitCnpjNodeList = emitElement.getElementsByTagName("CNPJ");
+                Element emitCnpjElement = (Element) emitCnpjNodeList.item(0);
+                emitCnpjElement.setTextContent(txtCnpj.getText());
+
+                // Obter o elemento <CNPJ> dentro do elemento <dest>
+                NodeList destCnpjList = doc.getElementsByTagName("dest");
+                Element destElement = (Element) destCnpjList.item(0);
+                NodeList destCnpjNodeList = destElement.getElementsByTagName("CNPJ");
+                Element destCnpjElement = (Element) destCnpjNodeList.item(0);
+                destCnpjElement.setTextContent(txtCnpjConvenio.getText());
+
+                Node chNFe = doc.getElementsByTagName("chNFe").item(0);
+                chNFe.setTextContent(getChNFe(txtSufixoChaveNf.getText(), chNFe.getTextContent()));
+
+                Node dhEmi = doc.getElementsByTagName("dhEmi").item(0);
+                int dh = getDhEmissao(Integer.parseInt(txtDtEmissaoInicio.getText()),Integer.parseInt(txtDtEmissaoFim.getText()));
+                System.out.println("Data emissao ha " + dh + " dias");
+                dhEmi.setTextContent(getDataEmissao(dh));
+                OffsetDateTime dataConvertida = OffsetDateTime.parse(getDataEmissao(dh));
+                DateTimeFormatter mascara = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                String dataEmissao = dataConvertida.format(mascara);
+                lblDtEmissaoGerada.setText(dataEmissao);
+
+                Node nNF = doc.getElementsByTagName("nNF").item(0);
+                String numNF = getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()),Integer.parseInt(txtNumNfFim.getText()));
+                nNF.setTextContent(numNF);
+                lblNumNfGerado.setText(numNF);
+
+                Node vOrig = doc.getElementsByTagName("vOrig").item(0);
+                String vlrOrigem = getValorTotal(Double.parseDouble(txtValorTotalInicio.getText().replace(",", ".")),Double.parseDouble(txtValorTotalFim.getText().replace(",", ".")));
+                System.out.println(vlrOrigem);
+                vOrig.setTextContent(vlrOrigem);
+                lblValorTotalGerado.setText(vlrOrigem);
+
+                NodeList fatList = doc.getElementsByTagName("fat");
+                Element fatElement = (Element) fatList.item(0);
+                NodeList vDescNodeList = fatElement.getElementsByTagName("vDesc");
+                Element vDescElement = (Element) vDescNodeList.item(0);
+                double desconto = Double.parseDouble(txtDesconto.getText().replace(",", "."));
+                vDescElement.setTextContent(Double.toString(desconto));
+
+                Node vLiq = doc.getElementsByTagName("vLiq").item(0);
+                String vLiquido = getValorLiquido(Double.parseDouble(vlrOrigem),Double.parseDouble(txtDesconto.getText().replace(',', '.')));
+                vLiq.setTextContent(vLiquido);
+
+                int qtdeBoletos = Integer.parseInt(txtQtdeBoleto.getText());
+
+                Element cobrElement = (Element) doc.getElementsByTagName("cobr").item(0);
+                Element dupElement = (Element) doc.getElementsByTagName("dup").item(0);
+                BigDecimal valorBoleto = new BigDecimal(Double.parseDouble(vLiquido) / qtdeBoletos).setScale(2, RoundingMode.HALF_EVEN);
+                BigDecimal somaBoletos = BigDecimal.valueOf(0.0);
+                DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+                OffsetDateTime offsetDateTime = OffsetDateTime.parse(getDataEmissao(dh), formatter);
+
+                for(int i = 0; i < qtdeBoletos;i++){
+                    Element dupCopiaElement = (Element) dupElement.cloneNode(true);
+                    String vencimento = offsetDateTime.plusMonths(i).format(DateTimeFormatter.ofPattern("yyyy-MM"))+"-30";
+                    dupCopiaElement.getElementsByTagName("nDup").item(0).setTextContent("00" + (i +1));
+                    dupCopiaElement.getElementsByTagName("dVenc").item(0).setTextContent(vencimento);
+
+                    if(i == qtdeBoletos -1) {
+                        BigDecimal ultimoBoleto = BigDecimal.valueOf(Double.parseDouble(vLiquido)).subtract(somaBoletos);
+                        dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(ultimoBoleto));
+                    }else {
+                        dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(valorBoleto));
+                    }
+                    somaBoletos = somaBoletos.add(valorBoleto);
+                    cobrElement.appendChild(dupCopiaElement);
+                }
+
+                NodeList dupList = doc.getElementsByTagName("dup");
+                int numeroDups = dupList.getLength();
+
+                for (int i = 0; i < numeroDups - qtdeBoletos; i++) {
+                    Node dup = dupList.item(0);
+                    dup.getParentNode().removeChild(dup);
+                }
+
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // Define o tamanho da indentação (2 espaços)
+
+                StringWriter stringWriter = new StringWriter();
+
+                transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
+                String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
+
+                txtResultado.setText(xmlData);
+                txtResultado.setCaretPosition(0);
+                scrlPnlTxtResultado.setViewportView(txtResultado);
+                scrlPnlTxtResultado.setBounds(510, 220, 580, 360);
+                pnlMeio.add(scrlPnlTxtResultado);
+
+            } catch (Exception e) {
+                System.out.println("msg excecao: " + e);
+            }
         }
     }
 
@@ -453,12 +571,27 @@ public class Principal extends JFrame {
         Random rand = new Random();
         return String.valueOf(rand.nextInt(max - min + 1) + min);
     }
+    public Integer getDhEmissao(int min, int max) {
+        Random rand = new Random();
+        return rand.nextInt(max - min + 1) + min;
+    }
 
     public String getValorTotal(double min, double max) {
         Random rand = new Random();
-        return String.valueOf(rand.nextDouble() * (max - min) + min).replace("\\.", ",");
+        double randomNumber = rand.nextDouble() * (max - min) + min;
+        String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");;
+        return numeroFormatado;//
     }
-
+    public String getValorLiquido(double valorTotal, double desconto) {
+        double randomNumber = valorTotal - desconto;
+        String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");
+        return numeroFormatado;//.replace("\\.", ",");
+    }
+    public String getChNFe(String sufixo, String chNfe) {
+        int posicaoSufixo = chNfe.length() - sufixo.length();
+        String padraoUltimosDigitos = "(\\d{"+posicaoSufixo+"})(\\d{" + sufixo.length()+"})";
+        return chNfe.replaceFirst(padraoUltimosDigitos, "$1" + sufixo);
+    }
     public static String getDataEmissao(int dias) {
         LocalDateTime agora = LocalDateTime.now();
         LocalDateTime emissionDateTime = agora.minusDays(dias);
@@ -468,7 +601,6 @@ public class Principal extends JFrame {
         String dataEmissao = df.format(date).replaceAll("(\\-\\d\\d)(\\d\\d)", "$1:$2");
         return dataEmissao;
     }
-
     public class Salvar implements ActionListener {
         public String arquivoSalvo;
 
@@ -478,7 +610,7 @@ public class Principal extends JFrame {
             fcSalvar.setDialogTitle("Salve o XML");
 
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
-            arquivoSalvo = "NF_" + txtNumNfInicio.getText() +
+            arquivoSalvo = "NF_" + lblNumNfGerado.getText() +
                     "_TESTE-" + dtf.format(LocalDateTime.now()) + ".xml";
 
             fcSalvar.setSelectedFile(new File(arquivoSalvo));
@@ -492,6 +624,8 @@ public class Principal extends JFrame {
 
                     pw.println(txtResultado.getText());
                     pw.close();
+                    System.out.println(atualizarSufixo());
+                    txtSufixoChaveNf.setText(atualizarSufixo());
                     JOptionPane.showMessageDialog(null, "Arquivo salvo");
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -500,14 +634,23 @@ public class Principal extends JFrame {
             }
         }
     }
+    public class Choose extends Component implements ActionListener {
+        public String arquivo;
 
-    public class Atualizar implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
-            lerXml(getArq());
+            JFileChooser fc = new JFileChooser();
+            fc.setCurrentDirectory(new File("E:\\qa\\nf"));
+            fc.setDialogTitle("Selecione o XML");
+
+            fc.showOpenDialog(Principal.this);
+            if (fc.getSelectedFile() != null) {
+                arquivo = String.valueOf(fc.getSelectedFile());
+                lblXMLEscolhido.setText(fc.getSelectedFile().getName());
+                setArq(arquivo);
+                lerXml(arquivo);
+            }
         }
     }
-
-
     public class SelecionarTexto implements FocusListener {
 
         private JTextField campoAlvo;
@@ -526,26 +669,6 @@ public class Principal extends JFrame {
 
         }
     }
-
-
-    public class Choose extends Component implements ActionListener {
-        public String arquivo;
-
-        public void actionPerformed(ActionEvent ev) {
-            JFileChooser fc = new JFileChooser();
-            fc.setCurrentDirectory(new File("E:\\qa\\nf"));
-            fc.setDialogTitle("Selecione o XML");
-
-            fc.showOpenDialog(Principal.this);
-            if (fc.getSelectedFile() != null) {
-                arquivo = String.valueOf(fc.getSelectedFile());
-                lblXMLEscolhido.setText(fc.getSelectedFile().getName());
-                setArq(arquivo);
-                lerXml(arquivo);
-            }
-        }
-    }
-
     public class limitaTexto implements KeyListener {
         private int tamanho;
         private JTextField campoAlvo;
@@ -557,7 +680,6 @@ public class Principal extends JFrame {
 
         @Override
         public void keyTyped(KeyEvent e) {
-            System.out.println(getDataEmissao(2));
             if (campoAlvo.getSelectedText() != null && campoAlvo.getSelectedText().length() == tamanho) {
                 campoAlvo.setText("");
             } else if (campoAlvo.getText().length() >= tamanho) // limitar a quantidade de caracteres na chamada
@@ -586,5 +708,18 @@ public class Principal extends JFrame {
             }
         }
     }
-
+    private static String readFileAsString(String filePath) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            return stringBuilder.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
