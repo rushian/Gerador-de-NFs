@@ -1,4 +1,3 @@
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -25,9 +24,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -94,7 +90,7 @@ public class Principal extends JFrame {
 
         btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
         pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
-        btnChoose.addActionListener(new Choose());
+        btnChoose.addActionListener(new escolheArquivo());
         pnlTopo.setLayout(new FlowLayout());
 
         pnlMeio = new JPanel();
@@ -143,9 +139,15 @@ public class Principal extends JFrame {
         lblSufixoChaveNf = new JLabel("Sufixo para Chave Nf:");//configurando o label
         lblSufixoChaveNf.setBounds(510, 40, 200, 25);
         pnlMeio.add(lblSufixoChaveNf);//adicionando o label configurado a janela
-
+        String sufixo = "";
         txtSufixoChaveNf = new JTextField(7);
-        txtSufixoChaveNf.setText("30583210001");
+        try {
+            sufixo = lerSufixo();
+        } catch (IOException e) {
+            sufixo = "30583210001";
+            throw new RuntimeException(e);
+        }
+        txtSufixoChaveNf.setText(sufixo);
         txtSufixoChaveNf.setBounds(640, 40, 120, 25);
         String sufixoToolTip = "<html>Valor que será utilizado no fim da ChNFe para criar a nova NF</html>" +
                 "<br>Clique em Salvar resultado para armazenar o xml gerado</html>";
@@ -323,83 +325,46 @@ public class Principal extends JFrame {
         temaFaixaInferior = new Color(0, 170, 220);
         temaFaixaMeio = new Color(250, 250, 250);
         temaFaixaSuperior = new Color(110, 195, 150);
+
     }
 
-    public String criarSufixo() throws IOException {
-        File file = new File("src/main/resources/sufixoChaveNf2.json");
-        if (!Files.exists(file.toPath())) {
-            try {
-                Files.createFile(file.toPath());
-                String sufixo = "{\"sufixoChaveNf\": \""  + txtSufixoChaveNf.getText() +"\"}";
-                System.out.println(sufixo);
-                Files.write(file.toPath(), sufixo.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
-            } catch (IOException e) {
-                e.printStackTrace();
+    public void atualizarSufixo() throws IOException {
+        System.setProperty("file.encoding", "UTF-8");
+        try {
+            File arquivoJson = new File("src/main/resources/sufixoChaveNf.json");
+            long sufixoChave = Long.parseLong(txtSufixoChaveNf.getText());
+
+            if (!Files.exists(arquivoJson.toPath())) {
+                try {
+                    Files.createFile(arquivoJson.toPath());
+                    JSONObject jsonSufixo = new JSONObject();
+                    jsonSufixo.put("sufixoChaveNf", sufixoChave);
+                    Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    System.out.println("verifica se arquivo existe: " + e.getMessage());
+                }
+            } else {
+                // If the file already exists, just update the value
+                JSONObject jsonSufixo = new JSONObject();
+                jsonSufixo.put("sufixoChaveNf", sufixoChave);
+                Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
             }
+        }catch (IOException e) {
+            System.out.println("Erro ao ler ou escrever no arquivo JSON: " + e.getMessage());
         }
-        String jsonFilePath = "src/main/resources/sufixoChaveNf2.json";
-        // Ler o conteúdo do arquivo JSON
-        String jsonContent = readFileAsString(jsonFilePath);
-
-        // Converter o conteúdo em um objeto JSON
-        JSONObject jsonObject = new JSONObject(jsonContent);
-
-        // Obter o array de amigos
-        JSONArray sufixoArray = jsonObject.getJSONArray("sufixoChaveNf");
-
-        // Criar um novo objeto JSON para o novo amigo
-        JSONObject novoSufixo = new JSONObject();
-        novoSufixo.put("sufixoChaveNf", sufixoArray.length() + 1);
-
-
-        // Adicionar o novo amigo ao array existente de amigos
-        sufixoArray.put(novoSufixo);
-
-        // Atualizar o objeto JSON com o array de amigos modificado
-        jsonObject.put("sufixoChaveNf", sufixoArray);
-
-        // Escrever o conteúdo atualizado de volta no arquivo JSON
-        String jsonString = jsonObject.toString();
-        Files.write(Paths.get(jsonFilePath), jsonString.getBytes(StandardCharsets.UTF_8));
-        return jsonFilePath;
     }
-    public static String atualizarSufixo() throws IOException {
-        String arquivoJson = "src/main/resources/sufixoChaveNf.json";
-        Path path = Paths.get(arquivoJson);
-        String sufixo = new String("Files.readAllBytes(path)");
+    public String lerSufixo() throws IOException {
+        System.setProperty("file.encoding", "UTF-8");
+        File arquivoJson = new File("src/main/resources/sufixoChaveNf.json");
+        String sufixoChave = "";
 
+        if (Files.exists(arquivoJson.toPath())) {
+            String conteudoJson = lerArquivoComoString(String.valueOf(arquivoJson));
+            JSONObject objetoJson = new JSONObject(conteudoJson);
+            sufixoChave = String.valueOf(objetoJson.getLong("sufixoChaveNf"));
+        }
 
-// De-serialize to an object
-       // Person user = mapper.readValue("{\"name\": \"John\"}", Person.class);
-        //System.out.println(user.name); //John
-
-// Read a single attribute
-/*
-        Map<String, String> map = new HashMap<>();
-        // Parse the JSON string into a map
-        //JsonObject jsonObject =  new JsonParser().parse(arquivoJson).getAsJsonObject();
-
-        // Get the value of the "sufixoChaveNf" key
-        String sufixoChaveNf = jsonObject.get("sufixoChaveNf").getAsString();
-
-        // Add the key-value pair to the map
-        map.put("sufixoChaveNf", sufixoChaveNf);
-
-        // Print the map
-        System.out.println(map);
-        int novoSufixo = Integer.parseInt((String) map.get("sufixoChaveNf"));
-        /*System.out.println(novoSufixo);
-        novoSufixo++;
-
-        System.out.println(novoSufixo);
-
-        // Atualiza o valor da chave "sufixoChaveNf"
-        map.put("sufixoChaveNf", String.valueOf(novoSufixo));
-
-        // Grava o arquivo JSON atualizado
-        String json = new Gson().toJson(map);
-        Files.write(path, json.getBytes());*/
-        return String.valueOf(sufixo);
+        return sufixoChave;
     }
     public void lerXml(String arquivo) {
         try {
@@ -426,11 +391,10 @@ public class Principal extends JFrame {
             scrlPnlTxtXml.setBounds(10, 40, 482, 550);
             pnlMeio.add(scrlPnlTxtXml);
 
-            System.out.println(criarSufixo());
             btnGerarNf.setEnabled(true);
             btnSalvarResultado.setEnabled(true);
         } catch (Exception e) {
-            System.out.println("msg excecao: " + e);
+            System.out.println("ler xml - msg excecao: " + e);
         }
     }
     public class gerarNf implements ActionListener {
@@ -546,11 +510,10 @@ public class Principal extends JFrame {
                 pnlMeio.add(scrlPnlTxtResultado);
 
             } catch (Exception e) {
-                System.out.println("msg excecao: " + e);
+                System.out.println("gerarNf - msg excecao: " + e);
             }
         }
     }
-
     private static void mudarCorDeFundoDosJFieldTexts(Container container, Color backgroundColor, Color textColor) {
         for (Component component : container.getComponents()) {
             if (component instanceof JTextField) {
@@ -566,7 +529,6 @@ public class Principal extends JFrame {
             }
         }
     }
-
     public String getNumeroNf(int min, int max) {
         Random rand = new Random();
         return String.valueOf(rand.nextInt(max - min + 1) + min);
@@ -575,7 +537,6 @@ public class Principal extends JFrame {
         Random rand = new Random();
         return rand.nextInt(max - min + 1) + min;
     }
-
     public String getValorTotal(double min, double max) {
         Random rand = new Random();
         double randomNumber = rand.nextDouble() * (max - min) + min;
@@ -611,6 +572,7 @@ public class Principal extends JFrame {
 
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
             arquivoSalvo = "NF_" + lblNumNfGerado.getText() +
+                    "_chNFe_" + txtSufixoChaveNf.getText() +
                     "_TESTE-" + dtf.format(LocalDateTime.now()) + ".xml";
 
             fcSalvar.setSelectedFile(new File(arquivoSalvo));
@@ -624,8 +586,10 @@ public class Principal extends JFrame {
 
                     pw.println(txtResultado.getText());
                     pw.close();
-                    System.out.println(atualizarSufixo());
-                    txtSufixoChaveNf.setText(atualizarSufixo());
+                    long sufixoChave = Long.parseLong(txtSufixoChaveNf.getText());
+                    sufixoChave++;
+                    txtSufixoChaveNf.setText(String.valueOf(sufixoChave));
+                    atualizarSufixo();
                     JOptionPane.showMessageDialog(null, "Arquivo salvo");
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -634,7 +598,7 @@ public class Principal extends JFrame {
             }
         }
     }
-    public class Choose extends Component implements ActionListener {
+    public class escolheArquivo extends Component implements ActionListener {
         public String arquivo;
 
         public void actionPerformed(ActionEvent ev) {
@@ -708,7 +672,7 @@ public class Principal extends JFrame {
             }
         }
     }
-    private static String readFileAsString(String filePath) {
+    private static String lerArquivoComoString(String filePath) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
             StringBuilder stringBuilder = new StringBuilder();
