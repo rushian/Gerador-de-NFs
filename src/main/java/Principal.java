@@ -583,9 +583,9 @@ public class Principal extends JFrame {
 
                 try {
                     pw = new PrintWriter(new FileWriter(fcSalvar.getSelectedFile()));
-
                     pw.println(txtResultado.getText());
                     pw.close();
+
                     long sufixoChave = Long.parseLong(txtSufixoChaveNf.getText());
                     sufixoChave++;
                     txtSufixoChaveNf.setText(String.valueOf(sufixoChave));
