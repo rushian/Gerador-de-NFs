@@ -88,15 +88,14 @@ public class Principal extends JFrame {
         pnlTopo.setBounds(0, 0, 1120, 35);
         pnlTopo.setBackground(temaFaixaSuperior);
 
-        btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
-        pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
-        btnChoose.addActionListener(new escolheArquivo());
-        pnlTopo.setLayout(new FlowLayout());
-
-
         btnConfigPath = new JButton("Configurar diretorio de saida");//configurando o botao ok
         pnlTopo.add(btnConfigPath);//adicionando o botao configurado a janela
         btnConfigPath.addActionListener(new definirPath());
+        pnlTopo.setLayout(new FlowLayout());
+
+        btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
+        pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
+        btnChoose.addActionListener(new escolheArquivo());
         pnlTopo.setLayout(new FlowLayout());
 
         pnlMeio = new JPanel();
@@ -736,6 +735,9 @@ public class Principal extends JFrame {
         public void actionPerformed(ActionEvent ev) {
             String pathSugerido = "E:\\qa\\nf";
             String path = JOptionPane.showInputDialog("Digite o caminho: ", pathSugerido);
+            if (path == null) {
+                path = pathSugerido;
+            }
             try {
                 definirPath(path);
             } catch (IOException e) {
