@@ -61,7 +61,7 @@ public class Principal extends JFrame {
     JTextArea txtXML, txtResultado;
     JTextField txtCnpj, txtCnpjConvenio,txtSufixoChaveNf, txtNumNfInicio, txtNumNfFim, txtDtEmissaoInicio, txtDtEmissaoFim,
             txtValorTotalInicio, txtValorTotalFim, txtDesconto, txtQtdeBoleto;
-    JButton btnChoose, btnSalvarResultado, btnGerarNf;
+    JButton btnChoose, btnConfigPath, btnSalvarResultado, btnGerarNf, btnGerarLote;
     JScrollPane scrlPnlTxtXml, scrlPnlTxtResultado;
     ImageIcon dolar;
     Color temaText, temaTextBg, temaTxtAreaBorda,temaTxtAreaBg,  temaFaixaInferior, temaFaixaSuperior, temaFaixaMeio;
@@ -91,6 +91,12 @@ public class Principal extends JFrame {
         btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
         pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
         btnChoose.addActionListener(new escolheArquivo());
+        pnlTopo.setLayout(new FlowLayout());
+
+
+        btnConfigPath = new JButton("Configurar diretorio de saida");//configurando o botao ok
+        pnlTopo.add(btnConfigPath);//adicionando o botao configurado a janela
+        btnConfigPath.addActionListener(new definirPath());
         pnlTopo.setLayout(new FlowLayout());
 
         pnlMeio = new JPanel();
@@ -296,7 +302,7 @@ public class Principal extends JFrame {
         pnlBot.add(lblNumProposta);
 
         btnGerarNf = new JButton("Gerar NF");
-        btnGerarNf.setBounds(850, 4, 90, 25);
+        btnGerarNf.setBounds(740, 4, 90, 25);
         btnGerarNf.addActionListener(new gerarNf());
         btnGerarNf.setEnabled(false);
         String f5ToolTip = "<html>Preencha o CPF e Numero da proposta, então atualize." +
@@ -306,10 +312,16 @@ public class Principal extends JFrame {
         pnlBot.add(btnGerarNf);
 
         btnSalvarResultado = new JButton("Salvar Resultado");
-        btnSalvarResultado.setBounds(950, 4, 140, 25);
+        btnSalvarResultado.setBounds(840, 4, 140, 25);
         btnSalvarResultado.addActionListener(new Salvar());
         btnSalvarResultado.setEnabled(false);
         pnlBot.add(btnSalvarResultado);
+
+        btnGerarLote = new JButton("Gerar Lote");
+        btnGerarLote.setBounds(990, 4, 100, 25);
+        btnGerarLote.addActionListener(new gerarLote());
+        btnGerarLote.setEnabled(false);
+        pnlBot.add(btnGerarLote);
 
         pnlGeral.add(pnlTopo);
         pnlGeral.add(pnlMeio);
@@ -328,6 +340,44 @@ public class Principal extends JFrame {
 
     }
 
+    public void definirPath(String caminho) throws IOException {
+        System.setProperty("file.encoding", "UTF-8");
+        try {
+            File arquivoJson = new File("src/main/resources/config.json");
+
+
+            if (!Files.exists(arquivoJson.toPath())) {
+                try {
+                    Files.createFile(arquivoJson.toPath());
+                    JSONObject jsonSufixo = new JSONObject();
+                    jsonSufixo.put("caminhoDeSaida", caminho);
+                    Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    System.out.println("verifica se arquivo existe: " + e.getMessage());
+                }
+            } else {
+                // If the file already exists, just update the value
+                JSONObject jsonSufixo = new JSONObject();
+                jsonSufixo.put("caminhoDeSaida", caminho);
+                Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        }catch (IOException e) {
+            System.out.println("Erro ao ler ou escrever no arquivo JSON: " + e.getMessage());
+        }
+    }
+    public String lerPath() throws IOException {
+        System.setProperty("file.encoding", "UTF-8");
+        File arquivoJson = new File("src/main/resources/config.json");
+        String caminhoDeSaida = "";
+
+        if (Files.exists(arquivoJson.toPath())) {
+            String conteudoJson = lerArquivoComoString(String.valueOf(arquivoJson));
+            JSONObject objetoJson = new JSONObject(conteudoJson);
+            caminhoDeSaida = String.valueOf(objetoJson.getString("caminhoDeSaida"));
+        }
+
+        return caminhoDeSaida;
+    }
     public void atualizarSufixo() throws IOException {
         System.setProperty("file.encoding", "UTF-8");
         try {
@@ -393,125 +443,159 @@ public class Principal extends JFrame {
 
             btnGerarNf.setEnabled(true);
             btnSalvarResultado.setEnabled(true);
+            btnGerarLote.setEnabled(true);
         } catch (Exception e) {
             System.out.println("ler xml - msg excecao: " + e);
         }
     }
+    public void gerarNota(){
+        if(Integer.parseInt(txtNumNfInicio.getText()) > Integer.parseInt(txtNumNfFim.getText())  ){
+            JOptionPane.showMessageDialog(null, "O valor limite para o numero da NF deve ser menor que o inicial", "Erro com o Fim do Range de numero de Nf", JOptionPane.INFORMATION_MESSAGE);
+
+            txtResultado.setText("");
+        }
+        try {
+            txtResultado.setText("");
+            File file = new File(getArq());
+
+            DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = fabrica.newDocumentBuilder();
+            Document doc = db.parse(file);
+
+            // Obter o elemento <CNPJ> dentro do elemento <emit>
+            NodeList emitCnpjList = doc.getElementsByTagName("emit");
+            Element emitElement = (Element) emitCnpjList.item(0);
+            NodeList emitCnpjNodeList = emitElement.getElementsByTagName("CNPJ");
+            Element emitCnpjElement = (Element) emitCnpjNodeList.item(0);
+            emitCnpjElement.setTextContent(txtCnpj.getText());
+
+            // Obter o elemento <CNPJ> dentro do elemento <dest>
+            NodeList destCnpjList = doc.getElementsByTagName("dest");
+            Element destElement = (Element) destCnpjList.item(0);
+            NodeList destCnpjNodeList = destElement.getElementsByTagName("CNPJ");
+            Element destCnpjElement = (Element) destCnpjNodeList.item(0);
+            destCnpjElement.setTextContent(txtCnpjConvenio.getText());
+
+            Node chNFe = doc.getElementsByTagName("chNFe").item(0);
+            chNFe.setTextContent(getChNFe(txtSufixoChaveNf.getText(), chNFe.getTextContent()));
+
+            Node dhEmi = doc.getElementsByTagName("dhEmi").item(0);
+            int dh = getDhEmissao(Integer.parseInt(txtDtEmissaoInicio.getText()),Integer.parseInt(txtDtEmissaoFim.getText()));
+            System.out.println("Data emissao ha " + dh + " dias");
+            dhEmi.setTextContent(getDataEmissao(dh));
+            OffsetDateTime dataConvertida = OffsetDateTime.parse(getDataEmissao(dh));
+            DateTimeFormatter mascara = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            String dataEmissao = dataConvertida.format(mascara);
+            lblDtEmissaoGerada.setText(dataEmissao);
+
+            Node nNF = doc.getElementsByTagName("nNF").item(0);
+            String numNF = getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()),Integer.parseInt(txtNumNfFim.getText()));
+            nNF.setTextContent(numNF);
+            lblNumNfGerado.setText(numNF);
+
+            Node vOrig = doc.getElementsByTagName("vOrig").item(0);
+            String vlrOrigem = getValorTotal(Double.parseDouble(txtValorTotalInicio.getText().replace(",", ".")),Double.parseDouble(txtValorTotalFim.getText().replace(",", ".")));
+            System.out.println(vlrOrigem);
+            vOrig.setTextContent(vlrOrigem);
+            lblValorTotalGerado.setText(vlrOrigem);
+
+            NodeList fatList = doc.getElementsByTagName("fat");
+            Element fatElement = (Element) fatList.item(0);
+            NodeList vDescNodeList = fatElement.getElementsByTagName("vDesc");
+            Element vDescElement = (Element) vDescNodeList.item(0);
+            double desconto = Double.parseDouble(txtDesconto.getText().replace(",", "."));
+            vDescElement.setTextContent(Double.toString(desconto));
+
+            Node vLiq = doc.getElementsByTagName("vLiq").item(0);
+            String vLiquido = getValorLiquido(Double.parseDouble(vlrOrigem),Double.parseDouble(txtDesconto.getText().replace(',', '.')));
+            vLiq.setTextContent(vLiquido);
+
+            int qtdeBoletos = Integer.parseInt(txtQtdeBoleto.getText());
+
+            Element cobrElement = (Element) doc.getElementsByTagName("cobr").item(0);
+            Element dupElement = (Element) doc.getElementsByTagName("dup").item(0);
+            BigDecimal valorBoleto = new BigDecimal(Double.parseDouble(vLiquido) / qtdeBoletos).setScale(2, RoundingMode.HALF_EVEN);
+            BigDecimal somaBoletos = BigDecimal.valueOf(0.0);
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(getDataEmissao(dh), formatter);
+
+            for(int i = 0; i < qtdeBoletos;i++){
+                Element dupCopiaElement = (Element) dupElement.cloneNode(true);
+                String vencimento = offsetDateTime.plusMonths(i+1).format(DateTimeFormatter.ofPattern("yyyy-MM"))+"-30";
+                dupCopiaElement.getElementsByTagName("nDup").item(0).setTextContent("00" + (i +1));
+                dupCopiaElement.getElementsByTagName("dVenc").item(0).setTextContent(vencimento);
+
+                if(i == qtdeBoletos -1) {
+                    BigDecimal ultimoBoleto = BigDecimal.valueOf(Double.parseDouble(vLiquido)).subtract(somaBoletos);
+                    dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(ultimoBoleto));
+                }else {
+                    dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(valorBoleto));
+                }
+                somaBoletos = somaBoletos.add(valorBoleto);
+                cobrElement.appendChild(dupCopiaElement);
+            }
+
+            NodeList dupList = doc.getElementsByTagName("dup");
+            int numeroDups = dupList.getLength();
+
+            for (int i = 0; i < numeroDups - qtdeBoletos; i++) {
+                Node dup = dupList.item(0);
+                dup.getParentNode().removeChild(dup);
+            }
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // Define o tamanho da indentação (2 espaços)
+
+            StringWriter stringWriter = new StringWriter();
+
+            transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
+            String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
+
+            txtResultado.setText(xmlData);
+            txtResultado.setCaretPosition(0);
+            scrlPnlTxtResultado.setViewportView(txtResultado);
+            scrlPnlTxtResultado.setBounds(510, 220, 580, 360);
+            pnlMeio.add(scrlPnlTxtResultado);
+
+        } catch (Exception e) {
+            System.out.println("gerarNf - msg excecao: " + e);
+        }
+    }
+    public void salvarLote(){
+
+        String arquivoSalvo;
+
+        String path = null;
+        try {
+            path = lerPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
+        arquivoSalvo = "chNFe_" + txtSufixoChaveNf.getText() +
+                "_NF" + lblNumNfGerado.getText() +
+                "_TESTE-" + dtf.format(LocalDateTime.now()) + ".xml";
+        PrintWriter pw;
+
+        try {
+            pw = new PrintWriter(new FileWriter(path+"\\"+arquivoSalvo));
+            pw.println(txtResultado.getText());
+            pw.close();
+
+            long sufixoChave = Long.parseLong(txtSufixoChaveNf.getText());
+            sufixoChave++;
+            txtSufixoChaveNf.setText(String.valueOf(sufixoChave));
+            atualizarSufixo();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public class gerarNf implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
-            if(Integer.parseInt(txtNumNfInicio.getText()) > Integer.parseInt(txtNumNfFim.getText())  ){
-                JOptionPane.showMessageDialog(null, "O valor limite para o numero da NF deve ser menor que o inicial", "Erro com o Fim do Range de numero de Nf", JOptionPane.INFORMATION_MESSAGE);
-
-                txtResultado.setText("");
-            }
-            try {
-                txtResultado.setText("");
-                File file = new File(getArq());
-
-                DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = fabrica.newDocumentBuilder();
-                Document doc = db.parse(file);
-
-                // Obter o elemento <CNPJ> dentro do elemento <emit>
-                NodeList emitCnpjList = doc.getElementsByTagName("emit");
-                Element emitElement = (Element) emitCnpjList.item(0);
-                NodeList emitCnpjNodeList = emitElement.getElementsByTagName("CNPJ");
-                Element emitCnpjElement = (Element) emitCnpjNodeList.item(0);
-                emitCnpjElement.setTextContent(txtCnpj.getText());
-
-                // Obter o elemento <CNPJ> dentro do elemento <dest>
-                NodeList destCnpjList = doc.getElementsByTagName("dest");
-                Element destElement = (Element) destCnpjList.item(0);
-                NodeList destCnpjNodeList = destElement.getElementsByTagName("CNPJ");
-                Element destCnpjElement = (Element) destCnpjNodeList.item(0);
-                destCnpjElement.setTextContent(txtCnpjConvenio.getText());
-
-                Node chNFe = doc.getElementsByTagName("chNFe").item(0);
-                chNFe.setTextContent(getChNFe(txtSufixoChaveNf.getText(), chNFe.getTextContent()));
-
-                Node dhEmi = doc.getElementsByTagName("dhEmi").item(0);
-                int dh = getDhEmissao(Integer.parseInt(txtDtEmissaoInicio.getText()),Integer.parseInt(txtDtEmissaoFim.getText()));
-                System.out.println("Data emissao ha " + dh + " dias");
-                dhEmi.setTextContent(getDataEmissao(dh));
-                OffsetDateTime dataConvertida = OffsetDateTime.parse(getDataEmissao(dh));
-                DateTimeFormatter mascara = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                String dataEmissao = dataConvertida.format(mascara);
-                lblDtEmissaoGerada.setText(dataEmissao);
-
-                Node nNF = doc.getElementsByTagName("nNF").item(0);
-                String numNF = getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()),Integer.parseInt(txtNumNfFim.getText()));
-                nNF.setTextContent(numNF);
-                lblNumNfGerado.setText(numNF);
-
-                Node vOrig = doc.getElementsByTagName("vOrig").item(0);
-                String vlrOrigem = getValorTotal(Double.parseDouble(txtValorTotalInicio.getText().replace(",", ".")),Double.parseDouble(txtValorTotalFim.getText().replace(",", ".")));
-                System.out.println(vlrOrigem);
-                vOrig.setTextContent(vlrOrigem);
-                lblValorTotalGerado.setText(vlrOrigem);
-
-                NodeList fatList = doc.getElementsByTagName("fat");
-                Element fatElement = (Element) fatList.item(0);
-                NodeList vDescNodeList = fatElement.getElementsByTagName("vDesc");
-                Element vDescElement = (Element) vDescNodeList.item(0);
-                double desconto = Double.parseDouble(txtDesconto.getText().replace(",", "."));
-                vDescElement.setTextContent(Double.toString(desconto));
-
-                Node vLiq = doc.getElementsByTagName("vLiq").item(0);
-                String vLiquido = getValorLiquido(Double.parseDouble(vlrOrigem),Double.parseDouble(txtDesconto.getText().replace(',', '.')));
-                vLiq.setTextContent(vLiquido);
-
-                int qtdeBoletos = Integer.parseInt(txtQtdeBoleto.getText());
-
-                Element cobrElement = (Element) doc.getElementsByTagName("cobr").item(0);
-                Element dupElement = (Element) doc.getElementsByTagName("dup").item(0);
-                BigDecimal valorBoleto = new BigDecimal(Double.parseDouble(vLiquido) / qtdeBoletos).setScale(2, RoundingMode.HALF_EVEN);
-                BigDecimal somaBoletos = BigDecimal.valueOf(0.0);
-                DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-                OffsetDateTime offsetDateTime = OffsetDateTime.parse(getDataEmissao(dh), formatter);
-
-                for(int i = 0; i < qtdeBoletos;i++){
-                    Element dupCopiaElement = (Element) dupElement.cloneNode(true);
-                    String vencimento = offsetDateTime.plusMonths(i).format(DateTimeFormatter.ofPattern("yyyy-MM"))+"-30";
-                    dupCopiaElement.getElementsByTagName("nDup").item(0).setTextContent("00" + (i +1));
-                    dupCopiaElement.getElementsByTagName("dVenc").item(0).setTextContent(vencimento);
-
-                    if(i == qtdeBoletos -1) {
-                        BigDecimal ultimoBoleto = BigDecimal.valueOf(Double.parseDouble(vLiquido)).subtract(somaBoletos);
-                        dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(ultimoBoleto));
-                    }else {
-                        dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(valorBoleto));
-                    }
-                    somaBoletos = somaBoletos.add(valorBoleto);
-                    cobrElement.appendChild(dupCopiaElement);
-                }
-
-                NodeList dupList = doc.getElementsByTagName("dup");
-                int numeroDups = dupList.getLength();
-
-                for (int i = 0; i < numeroDups - qtdeBoletos; i++) {
-                    Node dup = dupList.item(0);
-                    dup.getParentNode().removeChild(dup);
-                }
-
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // Define o tamanho da indentação (2 espaços)
-
-                StringWriter stringWriter = new StringWriter();
-
-                transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
-                String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
-
-                txtResultado.setText(xmlData);
-                txtResultado.setCaretPosition(0);
-                scrlPnlTxtResultado.setViewportView(txtResultado);
-                scrlPnlTxtResultado.setBounds(510, 220, 580, 360);
-                pnlMeio.add(scrlPnlTxtResultado);
-
-            } catch (Exception e) {
-                System.out.println("gerarNf - msg excecao: " + e);
-            }
+            gerarNota();
         }
     }
     private static void mudarCorDeFundoDosJFieldTexts(Container container, Color backgroundColor, Color textColor) {
@@ -567,12 +651,18 @@ public class Principal extends JFrame {
 
         public void actionPerformed(ActionEvent ev) {
             JFileChooser fcSalvar = new JFileChooser();
-            fcSalvar.setCurrentDirectory(new File("E:\\qa\\nf"));
+            String path;
+            try {
+                path = lerPath();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            fcSalvar.setCurrentDirectory(new File(path));
             fcSalvar.setDialogTitle("Salve o XML");
 
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
-            arquivoSalvo = "NF_" + lblNumNfGerado.getText() +
-                    "_chNFe_" + txtSufixoChaveNf.getText() +
+            arquivoSalvo = "chNFe_" + txtSufixoChaveNf.getText() +
+                    "_NF" + lblNumNfGerado.getText() +
                     "_TESTE-" + dtf.format(LocalDateTime.now()) + ".xml";
 
             fcSalvar.setSelectedFile(new File(arquivoSalvo));
@@ -599,12 +689,38 @@ public class Principal extends JFrame {
             }
         }
     }
+    public class gerarLote implements ActionListener {
+        public String arquivoSalvo;
+        public void actionPerformed(ActionEvent ev) {
+            int qtdeNfs = 0;
+
+            String qtdeNfsStr = JOptionPane.showInputDialog("Quantidade de NFs:","5");
+            if (qtdeNfsStr != null) {
+                try {
+                    qtdeNfs = Integer.parseInt(qtdeNfsStr);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Quantidade de NFs inválida");
+                }
+            }
+            for (int i = 0; i < qtdeNfs; i++) {
+                System.out.println(i + " indice");
+                gerarNota();
+                salvarLote();
+            }
+        }
+    }
     public class escolheArquivo extends Component implements ActionListener {
         public String arquivo;
 
         public void actionPerformed(ActionEvent ev) {
             JFileChooser fc = new JFileChooser();
-            fc.setCurrentDirectory(new File("E:\\qa\\nf"));
+            String path = null;
+            try {
+                path = lerPath();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            fc.setCurrentDirectory(new File(path));
             fc.setDialogTitle("Selecione o XML");
 
             fc.showOpenDialog(Principal.this);
@@ -613,6 +729,17 @@ public class Principal extends JFrame {
                 lblXMLEscolhido.setText(fc.getSelectedFile().getName());
                 setArq(arquivo);
                 lerXml(arquivo);
+            }
+        }
+    }
+    public class definirPath extends Component implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
+            String pathSugerido = "E:\\qa\\nf";
+            String path = JOptionPane.showInputDialog("Digite o caminho: ", pathSugerido);
+            try {
+                definirPath(path);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
