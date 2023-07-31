@@ -590,6 +590,7 @@ public class Principal extends JFrame {
                     sufixoChave++;
                     txtSufixoChaveNf.setText(String.valueOf(sufixoChave));
                     atualizarSufixo();
+
                     JOptionPane.showMessageDialog(null, "Arquivo salvo");
                 } catch (IOException e) {
                     e.printStackTrace();
