@@ -364,9 +364,9 @@ public class Principal extends JFrame {
                 temaTxtAreaBg = new Color(50, 50, 50);
                 temaScroll = new Color(80, 80, 80);
                 temaScrollBg = new Color(40, 40, 40);
-                temaFaixaInferior = new Color(20, 20, 20);
+                temaFaixaInferior = new Color(5, 5, 5);
                 temaFaixaMeio = new Color(30, 30, 30);
-                temaFaixaSuperior = new Color(10, 10, 10);
+                temaFaixaSuperior = new Color(5, 5, 5);
                 break;
             default:
                 temaText = Color.black;
@@ -707,7 +707,9 @@ public class Principal extends JFrame {
 
     public int getQtdeBoleto(int min, int max) {
         Random rand = new Random();
-        return rand.nextInt(max - min + 1) + min;
+        int quantidade = rand.nextInt(max - min + 1) + min;
+        lblQtdeBoletoGerado.setText(String.valueOf(quantidade));
+        return quantidade;
     }
     public String getValorLiquido(double valorTotal, double desconto) {
         double randomNumber = valorTotal - desconto;
