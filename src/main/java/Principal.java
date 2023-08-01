@@ -56,17 +56,18 @@ public class Principal extends JFrame {
     JPanel pnlGeral, pnlTopo, pnlMeio, pnlBot;
     JLabel lblCnpj, lblConvenio, lblSufixoChaveNf,lblNumNFInicio, lblNumNfFim,lblNumNfGerado,
             lblDtEmissaoInicio, lblDtEmissaoFim, lblDtEmissaoGerada, lblValorTotalInicio, lblValorTotalFim, lblValorTotalGerado,
-            lblDesconto, lblQtdeBoleto, lblXML, lblXMLEscolhido,
-            lblResultado, lblData, lblPagamento, lblNumProposta;
+            lblDesconto, lblQtdeBoletoInicio,lblQtdeBoletoFim , lblXML, lblXMLEscolhido,
+            lblResultado, lblData, lblPagamento, lblNumProposta, lblQtdeBoletoGerado, lblTema;
     JTextArea txtXML, txtResultado;
     JTextField txtCnpj, txtCnpjConvenio,txtSufixoChaveNf, txtNumNfInicio, txtNumNfFim, txtDtEmissaoInicio, txtDtEmissaoFim,
-            txtValorTotalInicio, txtValorTotalFim, txtDesconto, txtQtdeBoleto;
+            txtValorTotalInicio, txtValorTotalFim, txtDesconto, txtQtdeBoletoInicio, txtQtdeBoletoFim;
     JButton btnChoose, btnConfigPath, btnSalvarResultado, btnGerarNf, btnGerarLote;
+    JComboBox cmbbxTema;
     JScrollPane scrlPnlTxtXml, scrlPnlTxtResultado;
     ImageIcon dolar;
-    Color temaText, temaTextBg, temaTxtAreaBorda,temaTxtAreaBg,  temaFaixaInferior, temaFaixaSuperior, temaFaixaMeio;
+    Color temaText, temaTextBg, temaTxtAreaBorda,temaTxtAreaBg, temaScroll, temaScrollBg, temaFaixaInferior, temaFaixaSuperior, temaFaixaMeio;
     public Principal() {
-        tema();
+        tema("Trade");
 
         setTitle("Gerador de NFs");//definindo o titulo da janela
         setSize(1120, 700);
@@ -85,20 +86,30 @@ public class Principal extends JFrame {
         add(pnlGeral);
 
         pnlTopo = new JPanel();
+        pnlTopo.setName("topo");
         pnlTopo.setBounds(0, 0, 1120, 35);
         pnlTopo.setBackground(temaFaixaSuperior);
+        pnlTopo.setLayout(new FlowLayout());
 
         btnConfigPath = new JButton("Configurar diretorio de saida");//configurando o botao ok
         pnlTopo.add(btnConfigPath);//adicionando o botao configurado a janela
         btnConfigPath.addActionListener(new definirPath());
-        pnlTopo.setLayout(new FlowLayout());
 
         btnChoose = new JButton("Selecionar XML base");//configurando o botao ok
         pnlTopo.add(btnChoose);//adicionando o botao configurado a janela
         btnChoose.addActionListener(new escolheArquivo());
-        pnlTopo.setLayout(new FlowLayout());
+
+        lblTema = new JLabel("Tema: ");
+        pnlTopo.add(lblTema);
+
+        cmbbxTema = new JComboBox<>();
+        cmbbxTema.addItem("Trade");
+        cmbbxTema.addItem("Dark");
+        cmbbxTema.addActionListener(new escolherTema());
+        pnlTopo.add(cmbbxTema);
 
         pnlMeio = new JPanel();
+        pnlMeio.setName("meio");
         pnlMeio.setLayout(null);
         pnlMeio.setBounds(0, 35, 1180, 594);
         pnlMeio.setBackground(temaFaixaMeio);
@@ -243,24 +254,39 @@ public class Principal extends JFrame {
         lblValorTotalGerado.setBounds(950, 130, 120, 25);
         pnlMeio.add(lblValorTotalGerado);//adicionando o label configurado a janela
 
-        lblQtdeBoleto = new JLabel("Qtde de Boleto(s):");//configurando o label
-        lblQtdeBoleto.setBounds(510, 160, 110, 25);
-        pnlMeio.add(lblQtdeBoleto);//adicionando o label configurado a janela
+        lblQtdeBoletoInicio = new JLabel("Qtde de Boleto(s):");//configurando o label
+        lblQtdeBoletoInicio.setBounds(510, 160, 110, 25);
+        pnlMeio.add(lblQtdeBoletoInicio);//adicionando o label configurado a janela
 
-        txtQtdeBoleto = new JTextField(7);
-        txtQtdeBoleto.setText("1");
-        txtQtdeBoleto.setBounds(625, 160, 25, 25);
-        txtQtdeBoleto.addFocusListener(new SelecionarTexto(txtQtdeBoleto));
-        txtQtdeBoleto.addKeyListener(new limitaTexto(2, txtQtdeBoleto));
-        pnlMeio.add(txtQtdeBoleto);//adicionando o campo de texto configurado a janela
+        txtQtdeBoletoInicio = new JTextField(7);
+        txtQtdeBoletoInicio.setText("1");
+        txtQtdeBoletoInicio.setBounds(625, 160, 25, 25);
+        txtQtdeBoletoInicio.addFocusListener(new SelecionarTexto(txtQtdeBoletoInicio));
+        txtQtdeBoletoInicio.addKeyListener(new limitaTexto(2, txtQtdeBoletoInicio));
+        pnlMeio.add(txtQtdeBoletoInicio);//adicionando o campo de texto configurado a janela
+
+        lblQtdeBoletoFim = new JLabel("a");//configurando o label
+        lblQtdeBoletoFim.setBounds(660, 160, 20, 25);
+        pnlMeio.add(lblQtdeBoletoFim);//adicionando o label configurado a janela
+
+        txtQtdeBoletoFim = new JTextField(7);
+        txtQtdeBoletoFim.setText("2");
+        txtQtdeBoletoFim.setBounds(675, 160, 25, 25);
+        txtQtdeBoletoFim.addFocusListener(new SelecionarTexto(txtQtdeBoletoFim));
+        txtQtdeBoletoFim.addKeyListener(new limitaTexto(2, txtQtdeBoletoFim));
+        pnlMeio.add(txtQtdeBoletoFim);//adicionando o campo de texto configurado a janela
+
+        lblQtdeBoletoGerado = new JLabel();
+        lblQtdeBoletoGerado.setBounds(705, 160, 20, 25);
+        pnlMeio.add(lblQtdeBoletoGerado);
 
         lblDesconto = new JLabel("Desconto:");//configurando o label
-        lblDesconto.setBounds(660, 160, 60, 25);
+        lblDesconto.setBounds(740, 160, 60, 25);
         pnlMeio.add(lblDesconto);//adicionando o label configurado a janela
 
         txtDesconto = new JTextField(7);
         txtDesconto.setText("0,0");
-        txtDesconto.setBounds(725, 160, 120, 25);
+        txtDesconto.setBounds(800, 160, 120, 25);
         txtDesconto.addFocusListener(new SelecionarTexto(txtDesconto));
         txtDesconto.addKeyListener(new limitaTexto(14, txtDesconto));
         pnlMeio.add(txtDesconto);//adicionando o campo de texto configurado a janela
@@ -281,9 +307,10 @@ public class Principal extends JFrame {
         txtResultado.setToolTipText(new String(resultadoToolTipArr, StandardCharsets.UTF_8));
         pnlMeio.add(txtResultado);
         scrlPnlTxtResultado = new JScrollPane();
-        mudarCorDeFundoDosJFieldTexts(pnlMeio, temaTextBg, temaText);
+        mudarCorDeFundoDosJFieldTexts(pnlMeio);
 
         pnlBot = new JPanel();
+        pnlBot.setName("bot");
         pnlBot.setLayout(null);
         pnlBot.setBounds(0, 629, 1120, 35);
         pnlBot.setBackground(temaFaixaInferior);
@@ -328,15 +355,32 @@ public class Principal extends JFrame {
         pnlGeral.setVisible(true);
 
     }
-    public void tema(){
-        temaText = Color.black;
-        temaTextBg = new Color(255, 255, 255);
-        temaTxtAreaBorda = new Color(37, 37, 37);
-        temaTxtAreaBg = new Color(255, 255, 255);
-        temaFaixaInferior = new Color(0, 170, 220);
-        temaFaixaMeio = new Color(250, 250, 250);
-        temaFaixaSuperior = new Color(110, 195, 150);
+    public void tema(String opcao){
+        switch (opcao) {
+            case "Dark":
+                temaText = Color.white;
+                temaTextBg = new Color(50, 50, 50);
+                temaTxtAreaBorda = new Color(37, 37, 37);
+                temaTxtAreaBg = new Color(50, 50, 50);
+                temaScroll = new Color(80, 80, 80);
+                temaScrollBg = new Color(40, 40, 40);
+                temaFaixaInferior = new Color(20, 20, 20);
+                temaFaixaMeio = new Color(30, 30, 30);
+                temaFaixaSuperior = new Color(10, 10, 10);
+                break;
+            default:
+                temaText = Color.black;
+                temaTextBg = new Color(255, 255, 255);
+                temaTxtAreaBorda = new Color(37, 37, 37);
+                temaTxtAreaBg = new Color(255, 255, 255);
+                temaScroll = UIManager.getColor("Panel.background");
+                temaScrollBg = UIManager.getColor("Panel.background");
+                temaFaixaInferior = new Color(0, 170, 220);
+                temaFaixaMeio = new Color(250, 250, 250);
+                temaFaixaSuperior = new Color(110, 195, 150);
+                break;
 
+        }
     }
 
     public void definirPath(String caminho) throws IOException {
@@ -438,6 +482,8 @@ public class Principal extends JFrame {
             txtXML.setCaretPosition(0);
             scrlPnlTxtXml.setViewportView(txtXML);
             scrlPnlTxtXml.setBounds(10, 40, 482, 550);
+            scrlPnlTxtXml.getVerticalScrollBar().setForeground(temaScrollBg);
+            scrlPnlTxtXml.getVerticalScrollBar().setBackground(temaScrollBg);
             pnlMeio.add(scrlPnlTxtXml);
 
             btnGerarNf.setEnabled(true);
@@ -509,7 +555,7 @@ public class Principal extends JFrame {
             String vLiquido = getValorLiquido(Double.parseDouble(vlrOrigem),Double.parseDouble(txtDesconto.getText().replace(',', '.')));
             vLiq.setTextContent(vLiquido);
 
-            int qtdeBoletos = Integer.parseInt(txtQtdeBoleto.getText());
+            int qtdeBoletos = getQtdeBoleto(Integer.parseInt(txtQtdeBoletoInicio.getText()),Integer.parseInt(txtQtdeBoletoFim.getText()) );
 
             Element cobrElement = (Element) doc.getElementsByTagName("cobr").item(0);
             Element dupElement = (Element) doc.getElementsByTagName("dup").item(0);
@@ -555,6 +601,8 @@ public class Principal extends JFrame {
             txtResultado.setText(xmlData);
             txtResultado.setCaretPosition(0);
             scrlPnlTxtResultado.setViewportView(txtResultado);
+            scrlPnlTxtResultado.getVerticalScrollBar().setForeground(temaScrollBg);
+            scrlPnlTxtResultado.getVerticalScrollBar().setBackground(temaScrollBg);
             scrlPnlTxtResultado.setBounds(510, 220, 580, 360);
             pnlMeio.add(scrlPnlTxtResultado);
 
@@ -597,18 +645,48 @@ public class Principal extends JFrame {
             gerarNota();
         }
     }
-    private static void mudarCorDeFundoDosJFieldTexts(Container container, Color backgroundColor, Color textColor) {
+    private void mudarCorDeFundoDosJFieldTexts(Container container) {
+
         for (Component component : container.getComponents()) {
+            if (component instanceof JTextArea){
+                JTextArea txtArea = (JTextArea) component;
+                txtArea.setBackground(temaTxtAreaBg);
+                txtArea.setForeground(temaText);
+                Border lineBorder = BorderFactory.createLineBorder(temaScroll);
+                Border paddedBorder = BorderFactory.createEmptyBorder(0, 4, 0, 0);
+                txtArea.setBorder(BorderFactory.createCompoundBorder(lineBorder, paddedBorder));
+            }
+            if (component instanceof JLabel){
+                JLabel labels = (JLabel) component;
+                labels.setForeground(temaText);
+            }
+            if (component instanceof JScrollPane){
+                JScrollPane scrolls = (JScrollPane) component;
+                scrolls.getHorizontalScrollBar().setBackground(temaScrollBg);
+                scrolls.getVerticalScrollBar().setBackground(temaScrollBg);
+            }
+            if (component instanceof JPanel && component.getName().equals("topo")){
+                JPanel painel = (JPanel) component;
+                painel.setBackground(temaFaixaSuperior);
+            }
+            if (component instanceof JPanel && component.getName().equals("meio")){
+                JPanel painel = (JPanel) component;
+                painel.setBackground(temaFaixaMeio);
+            }
+            if (component instanceof JPanel && component.getName().equals("bot")){
+                JPanel painel = (JPanel) component;
+                painel.setBackground(temaFaixaInferior);
+            }
             if (component instanceof JTextField) {
                 JTextField textField = (JTextField) component;
-                textField.setBackground(backgroundColor);
-                textField.setForeground(textColor);
-                Border lineBorder = BorderFactory.createLineBorder(new Color(100, 100, 100));
+                textField.setBackground(temaTextBg);
+                textField.setForeground(temaText);
+                Border lineBorder = BorderFactory.createLineBorder(temaTxtAreaBorda);
                 Border paddedBorder = BorderFactory.createEmptyBorder(0, 4, 0, 0);
                 textField.setBorder(BorderFactory.createCompoundBorder(lineBorder, paddedBorder));
 
             } else if (component instanceof Container) {
-                mudarCorDeFundoDosJFieldTexts((Container) component, backgroundColor, textColor);
+                mudarCorDeFundoDosJFieldTexts((Container) component);
             }
         }
     }
@@ -625,6 +703,11 @@ public class Principal extends JFrame {
         double randomNumber = rand.nextDouble() * (max - min) + min;
         String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");;
         return numeroFormatado;//
+    }
+
+    public int getQtdeBoleto(int min, int max) {
+        Random rand = new Random();
+        return rand.nextInt(max - min + 1) + min;
     }
     public String getValorLiquido(double valorTotal, double desconto) {
         double randomNumber = valorTotal - desconto;
@@ -689,7 +772,6 @@ public class Principal extends JFrame {
         }
     }
     public class gerarLote implements ActionListener {
-        public String arquivoSalvo;
         public void actionPerformed(ActionEvent ev) {
             int qtdeNfs = 0;
 
@@ -702,11 +784,20 @@ public class Principal extends JFrame {
                 }
             }
             for (int i = 0; i < qtdeNfs; i++) {
-                System.out.println(i + " indice");
                 gerarNota();
                 salvarLote();
             }
         }
+    }
+    public class escolherTema implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String temaEscolhido = (String) cmbbxTema.getSelectedItem();
+            tema(temaEscolhido);
+            mudarCorDeFundoDosJFieldTexts(pnlGeral);
+
+        }
+
     }
     public class escolheArquivo extends Component implements ActionListener {
         public String arquivo;
@@ -746,7 +837,6 @@ public class Principal extends JFrame {
         }
     }
     public class SelecionarTexto implements FocusListener {
-
         private JTextField campoAlvo;
 
         public SelecionarTexto(JTextField campoAlvo) {
