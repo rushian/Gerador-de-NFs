@@ -35,37 +35,21 @@ import java.util.Date;
 import java.util.Random;
 
 public class Principal extends JFrame {
-
-    private String arq;
-
-    public static void main(String[] args) {
-
-        Principal ok = new Principal();
-        ok.setVisible(true);
-    }
-
-    public String getArq() {
-        return arq;
-    }
-
-    public void setArq(String arq) {
-        this.arq = arq;
-    }
-
     //declarando componentes
     JPanel pnlGeral, pnlTopo, pnlMeio, pnlBot;
-    JLabel lblCnpj, lblConvenio, lblSufixoChaveNf,lblNumNFInicio, lblNumNfFim,lblNumNfGerado,
+    JLabel lblCnpj, lblConvenio, lblSufixoChaveNf, lblNumNFInicio, lblNumNfFim, lblNumNfGerado,
             lblDtEmissaoInicio, lblDtEmissaoFim, lblDtEmissaoGerada, lblValorTotalInicio, lblValorTotalFim, lblValorTotalGerado,
-            lblDesconto, lblQtdeBoletoInicio,lblQtdeBoletoFim , lblXML, lblXMLEscolhido,
+            lblDesconto, lblQtdeBoletoInicio, lblQtdeBoletoFim, lblXML, lblXMLEscolhido,
             lblResultado, lblData, lblPagamento, lblNumProposta, lblQtdeBoletoGerado, lblTema;
     JTextArea txtXML, txtResultado;
-    JTextField txtCnpj, txtCnpjConvenio,txtSufixoChaveNf, txtNumNfInicio, txtNumNfFim, txtDtEmissaoInicio, txtDtEmissaoFim,
+    JTextField txtCnpj, txtCnpjConvenio, txtSufixoChaveNf, txtNumNfInicio, txtNumNfFim, txtDtEmissaoInicio, txtDtEmissaoFim,
             txtValorTotalInicio, txtValorTotalFim, txtDesconto, txtQtdeBoletoInicio, txtQtdeBoletoFim;
     JButton btnChoose, btnConfigPath, btnSalvarResultado, btnGerarNf, btnGerarLote;
     JComboBox cmbbxTema;
     JScrollPane scrlPnlTxtXml, scrlPnlTxtResultado;
     ImageIcon dolar;
-    Color temaText, temaTextBg, temaTxtAreaBorda,temaTxtAreaBg, temaScroll, temaScrollBg, temaFaixaInferior, temaFaixaSuperior, temaFaixaMeio;
+    Color temaText, temaTextBg, temaTxtAreaBorda, temaTxtAreaBg, temaScroll, temaScrollBg, temaFaixaInferior, temaFaixaSuperior, temaFaixaMeio;
+    private String arq;
     public Principal() {
         tema("Trade");
 
@@ -157,12 +141,7 @@ public class Principal extends JFrame {
         pnlMeio.add(lblSufixoChaveNf);//adicionando o label configurado a janela
         String sufixo = "";
         txtSufixoChaveNf = new JTextField(7);
-        try {
-            sufixo = lerSufixo();
-        } catch (IOException e) {
-            sufixo = "30583210001";
-            throw new RuntimeException(e);
-        }
+        sufixo = lerSufixo();
         txtSufixoChaveNf.setText(sufixo);
         txtSufixoChaveNf.setBounds(640, 40, 120, 25);
         String sufixoToolTip = "<html>Valor que será utilizado no fim da ChNFe para criar a nova NF</html>" +
@@ -190,7 +169,7 @@ public class Principal extends JFrame {
         pnlMeio.add(lblDtEmissaoFim);//adicionando o label configurado a janela
 
         txtDtEmissaoFim = new JTextField(7);
-        txtDtEmissaoFim.setText("180");
+        txtDtEmissaoFim.setText("18");
         txtDtEmissaoFim.setBounds(815, 70, 30, 25);
         txtDtEmissaoFim.addFocusListener(new SelecionarTexto(txtDtEmissaoFim));
         txtDtEmissaoFim.addKeyListener(new limitaTexto(3, txtDtEmissaoFim));
@@ -244,7 +223,7 @@ public class Principal extends JFrame {
         pnlMeio.add(lblValorTotalFim);//adicionando o label configurado a janela
 
         txtValorTotalFim = new JTextField(7);
-        txtValorTotalFim.setText("15800,10");
+        txtValorTotalFim.setText("1580,10");
         txtValorTotalFim.setBounds(815, 130, 120, 25);
         txtValorTotalFim.addFocusListener(new SelecionarTexto(txtValorTotalFim));
         txtValorTotalFim.addKeyListener(new limitaTexto(14, txtValorTotalFim));
@@ -270,14 +249,14 @@ public class Principal extends JFrame {
         pnlMeio.add(lblQtdeBoletoFim);//adicionando o label configurado a janela
 
         txtQtdeBoletoFim = new JTextField(7);
-        txtQtdeBoletoFim.setText("2");
+        txtQtdeBoletoFim.setText("4");
         txtQtdeBoletoFim.setBounds(675, 160, 25, 25);
         txtQtdeBoletoFim.addFocusListener(new SelecionarTexto(txtQtdeBoletoFim));
         txtQtdeBoletoFim.addKeyListener(new limitaTexto(2, txtQtdeBoletoFim));
         pnlMeio.add(txtQtdeBoletoFim);//adicionando o campo de texto configurado a janela
 
         lblQtdeBoletoGerado = new JLabel();
-        lblQtdeBoletoGerado.setBounds(705, 160, 20, 25);
+        lblQtdeBoletoGerado.setBounds(708, 160, 20, 25);
         pnlMeio.add(lblQtdeBoletoGerado);
 
         lblDesconto = new JLabel("Desconto:");//configurando o label
@@ -353,148 +332,58 @@ public class Principal extends JFrame {
         pnlGeral.add(pnlMeio);
         pnlGeral.add(pnlBot);
         pnlGeral.setVisible(true);
-
     }
-    public void tema(String opcao){
-        switch (opcao) {
-            case "Dark":
-                temaText = Color.white;
-                temaTextBg = new Color(50, 50, 50);
-                temaTxtAreaBorda = new Color(37, 37, 37);
-                temaTxtAreaBg = new Color(50, 50, 50);
-                temaScroll = new Color(80, 80, 80);
-                temaScrollBg = new Color(40, 40, 40);
-                temaFaixaInferior = new Color(5, 5, 5);
-                temaFaixaMeio = new Color(30, 30, 30);
-                temaFaixaSuperior = new Color(5, 5, 5);
-                break;
-            default:
-                temaText = Color.black;
-                temaTextBg = new Color(255, 255, 255);
-                temaTxtAreaBorda = new Color(37, 37, 37);
-                temaTxtAreaBg = new Color(255, 255, 255);
-                temaScroll = UIManager.getColor("Panel.background");
-                temaScrollBg = UIManager.getColor("Panel.background");
-                temaFaixaInferior = new Color(0, 170, 220);
-                temaFaixaMeio = new Color(250, 250, 250);
-                temaFaixaSuperior = new Color(110, 195, 150);
-                break;
 
+    public static void main(String[] args) {
+
+        Principal ok = new Principal();
+        ok.setVisible(true);
+    }
+
+    public static String getDataEmissao(int dias) {
+        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime emissionDateTime = agora.minusDays(dias);
+        Instant instant = emissionDateTime.atZone(ZoneId.of("America/Sao_Paulo")).toInstant();
+        Date date = Date.from(instant);
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        String dataEmissao = df.format(date).replaceAll("(\\-\\d\\d)(\\d\\d)", "$1:$2");
+        return dataEmissao;
+    }
+
+    public String getArq() {
+        return arq;
+    }
+
+    public void setArq(String arq) {
+        this.arq = arq;
+    }
+
+    public void tema(String opcao) {
+        if (opcao.equals("Dark")) {
+            temaText = Color.white;
+            temaTextBg = new Color(50, 50, 50);
+            temaTxtAreaBorda = new Color(37, 37, 37);
+            temaTxtAreaBg = new Color(50, 50, 50);
+            temaScroll = new Color(80, 80, 80);
+            temaScrollBg = new Color(40, 40, 40);
+            temaFaixaInferior = new Color(5, 5, 5);
+            temaFaixaMeio = new Color(30, 30, 30);
+            temaFaixaSuperior = new Color(5, 5, 5);
+        } else {
+            temaText = Color.black;
+            temaTextBg = new Color(255, 255, 255);
+            temaTxtAreaBorda = new Color(37, 37, 37);
+            temaTxtAreaBg = new Color(255, 255, 255);
+            temaScroll = UIManager.getColor("Panel.background");
+            temaScrollBg = UIManager.getColor("Panel.background");
+            temaFaixaInferior = new Color(0, 170, 220);
+            temaFaixaMeio = new Color(250, 250, 250);
+            temaFaixaSuperior = new Color(110, 195, 150);
         }
     }
 
-    public void definirPath(String caminho) throws IOException {
-        System.setProperty("file.encoding", "UTF-8");
-        try {
-            File arquivoJson = new File("src/main/resources/config.json");
-
-
-            if (!Files.exists(arquivoJson.toPath())) {
-                try {
-                    Files.createFile(arquivoJson.toPath());
-                    JSONObject jsonSufixo = new JSONObject();
-                    jsonSufixo.put("caminhoDeSaida", caminho);
-                    Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    System.out.println("verifica se arquivo existe: " + e.getMessage());
-                }
-            } else {
-                // If the file already exists, just update the value
-                JSONObject jsonSufixo = new JSONObject();
-                jsonSufixo.put("caminhoDeSaida", caminho);
-                Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
-            }
-        }catch (IOException e) {
-            System.out.println("Erro ao ler ou escrever no arquivo JSON: " + e.getMessage());
-        }
-    }
-    public String lerPath() throws IOException {
-        System.setProperty("file.encoding", "UTF-8");
-        File arquivoJson = new File("src/main/resources/config.json");
-        String caminhoDeSaida = "";
-
-        if (Files.exists(arquivoJson.toPath())) {
-            String conteudoJson = lerArquivoComoString(String.valueOf(arquivoJson));
-            JSONObject objetoJson = new JSONObject(conteudoJson);
-            caminhoDeSaida = String.valueOf(objetoJson.getString("caminhoDeSaida"));
-        }
-
-        return caminhoDeSaida;
-    }
-    public void atualizarSufixo() throws IOException {
-        System.setProperty("file.encoding", "UTF-8");
-        try {
-            File arquivoJson = new File("src/main/resources/sufixoChaveNf.json");
-            long sufixoChave = Long.parseLong(txtSufixoChaveNf.getText());
-
-            if (!Files.exists(arquivoJson.toPath())) {
-                try {
-                    Files.createFile(arquivoJson.toPath());
-                    JSONObject jsonSufixo = new JSONObject();
-                    jsonSufixo.put("sufixoChaveNf", sufixoChave);
-                    Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    System.out.println("verifica se arquivo existe: " + e.getMessage());
-                }
-            } else {
-                // If the file already exists, just update the value
-                JSONObject jsonSufixo = new JSONObject();
-                jsonSufixo.put("sufixoChaveNf", sufixoChave);
-                Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
-            }
-        }catch (IOException e) {
-            System.out.println("Erro ao ler ou escrever no arquivo JSON: " + e.getMessage());
-        }
-    }
-    public String lerSufixo() throws IOException {
-        System.setProperty("file.encoding", "UTF-8");
-        File arquivoJson = new File("src/main/resources/sufixoChaveNf.json");
-        String sufixoChave = "";
-
-        if (Files.exists(arquivoJson.toPath())) {
-            String conteudoJson = lerArquivoComoString(String.valueOf(arquivoJson));
-            JSONObject objetoJson = new JSONObject(conteudoJson);
-            sufixoChave = String.valueOf(objetoJson.getLong("sufixoChaveNf"));
-        }
-
-        return sufixoChave;
-    }
-    public void lerXml(String arquivo) {
-        try {
-            txtResultado.setText("");
-
-            File file = new File(arquivo);
-            DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = fabrica.newDocumentBuilder();
-            Document doc = db.parse(file);
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // Define o tamanho da indentação (2 espaços)
-
-            StringWriter stringWriter = new StringWriter();
-
-            transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
-            String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
-
-            txtXML.setText(xmlData);
-            txtXML.setCaretPosition(0);
-            scrlPnlTxtXml.setViewportView(txtXML);
-            scrlPnlTxtXml.setBounds(10, 40, 482, 550);
-            scrlPnlTxtXml.getVerticalScrollBar().setForeground(temaScrollBg);
-            scrlPnlTxtXml.getVerticalScrollBar().setBackground(temaScrollBg);
-            pnlMeio.add(scrlPnlTxtXml);
-
-            btnGerarNf.setEnabled(true);
-            btnSalvarResultado.setEnabled(true);
-            btnGerarLote.setEnabled(true);
-        } catch (Exception e) {
-            System.out.println("ler xml - msg excecao: " + e);
-        }
-    }
-    public void gerarNota(){
-        if(Integer.parseInt(txtNumNfInicio.getText()) > Integer.parseInt(txtNumNfFim.getText())  ){
+    public void gerarNota() {
+        if (Integer.parseInt(txtNumNfInicio.getText()) > Integer.parseInt(txtNumNfFim.getText())) {
             JOptionPane.showMessageDialog(null, "O valor limite para o numero da NF deve ser menor que o inicial", "Erro com o Fim do Range de numero de Nf", JOptionPane.INFORMATION_MESSAGE);
 
             txtResultado.setText("");
@@ -525,7 +414,7 @@ public class Principal extends JFrame {
             chNFe.setTextContent(getChNFe(txtSufixoChaveNf.getText(), chNFe.getTextContent()));
 
             Node dhEmi = doc.getElementsByTagName("dhEmi").item(0);
-            int dh = getDhEmissao(Integer.parseInt(txtDtEmissaoInicio.getText()),Integer.parseInt(txtDtEmissaoFim.getText()));
+            int dh = getDhEmissao(Integer.parseInt(txtDtEmissaoInicio.getText()), Integer.parseInt(txtDtEmissaoFim.getText()));
             System.out.println("Data emissao ha " + dh + " dias");
             dhEmi.setTextContent(getDataEmissao(dh));
             OffsetDateTime dataConvertida = OffsetDateTime.parse(getDataEmissao(dh));
@@ -534,12 +423,12 @@ public class Principal extends JFrame {
             lblDtEmissaoGerada.setText(dataEmissao);
 
             Node nNF = doc.getElementsByTagName("nNF").item(0);
-            String numNF = getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()),Integer.parseInt(txtNumNfFim.getText()));
+            String numNF = getNumeroNf(Integer.parseInt(txtNumNfInicio.getText()), Integer.parseInt(txtNumNfFim.getText()));
             nNF.setTextContent(numNF);
             lblNumNfGerado.setText(numNF);
 
             Node vOrig = doc.getElementsByTagName("vOrig").item(0);
-            String vlrOrigem = getValorTotal(Double.parseDouble(txtValorTotalInicio.getText().replace(",", ".")),Double.parseDouble(txtValorTotalFim.getText().replace(",", ".")));
+            String vlrOrigem = getValorTotal(Double.parseDouble(txtValorTotalInicio.getText().replace(",", ".")), Double.parseDouble(txtValorTotalFim.getText().replace(",", ".")));
             System.out.println(vlrOrigem);
             vOrig.setTextContent(vlrOrigem);
             lblValorTotalGerado.setText(vlrOrigem);
@@ -552,10 +441,10 @@ public class Principal extends JFrame {
             vDescElement.setTextContent(Double.toString(desconto));
 
             Node vLiq = doc.getElementsByTagName("vLiq").item(0);
-            String vLiquido = getValorLiquido(Double.parseDouble(vlrOrigem),Double.parseDouble(txtDesconto.getText().replace(',', '.')));
+            String vLiquido = getValorLiquido(Double.parseDouble(vlrOrigem), Double.parseDouble(txtDesconto.getText().replace(',', '.')));
             vLiq.setTextContent(vLiquido);
 
-            int qtdeBoletos = getQtdeBoleto(Integer.parseInt(txtQtdeBoletoInicio.getText()),Integer.parseInt(txtQtdeBoletoFim.getText()) );
+            int qtdeBoletos = getQtdeBoleto(Integer.parseInt(txtQtdeBoletoInicio.getText()), Integer.parseInt(txtQtdeBoletoFim.getText()));
 
             Element cobrElement = (Element) doc.getElementsByTagName("cobr").item(0);
             Element dupElement = (Element) doc.getElementsByTagName("dup").item(0);
@@ -564,16 +453,16 @@ public class Principal extends JFrame {
             DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
             OffsetDateTime offsetDateTime = OffsetDateTime.parse(getDataEmissao(dh), formatter);
 
-            for(int i = 0; i < qtdeBoletos;i++){
+            for (int i = 0; i < qtdeBoletos; i++) {
                 Element dupCopiaElement = (Element) dupElement.cloneNode(true);
-                String vencimento = offsetDateTime.plusMonths(i+1).format(DateTimeFormatter.ofPattern("yyyy-MM"))+"-30";
-                dupCopiaElement.getElementsByTagName("nDup").item(0).setTextContent("00" + (i +1));
+                String vencimento = offsetDateTime.plusMonths(i + 1).format(DateTimeFormatter.ofPattern("yyyy-MM")) + "-30";
+                dupCopiaElement.getElementsByTagName("nDup").item(0).setTextContent("00" + (i + 1));
                 dupCopiaElement.getElementsByTagName("dVenc").item(0).setTextContent(vencimento);
 
-                if(i == qtdeBoletos -1) {
+                if (i == qtdeBoletos - 1) {
                     BigDecimal ultimoBoleto = BigDecimal.valueOf(Double.parseDouble(vLiquido)).subtract(somaBoletos);
                     dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(ultimoBoleto));
-                }else {
+                } else {
                     dupCopiaElement.getElementsByTagName("vDup").item(0).setTextContent(String.valueOf(valorBoleto));
                 }
                 somaBoletos = somaBoletos.add(valorBoleto);
@@ -596,7 +485,7 @@ public class Principal extends JFrame {
             StringWriter stringWriter = new StringWriter();
 
             transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
-            String xmlData = stringWriter.toString().replaceAll("\\s+\\n","\n");
+            String xmlData = stringWriter.toString().replaceAll("\\s+\\n", "\n");
 
             txtResultado.setText(xmlData);
             txtResultado.setCaretPosition(0);
@@ -610,16 +499,12 @@ public class Principal extends JFrame {
             System.out.println("gerarNf - msg excecao: " + e);
         }
     }
-    public void salvarLote(){
 
+    public void salvarLote() {
         String arquivoSalvo;
 
         String path = null;
-        try {
-            path = lerPath();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        path = lerPath();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HHmm");
         arquivoSalvo = "chNFe_" + txtSufixoChaveNf.getText() +
                 "_NF" + lblNumNfGerado.getText() +
@@ -627,7 +512,7 @@ public class Principal extends JFrame {
         PrintWriter pw;
 
         try {
-            pw = new PrintWriter(new FileWriter(path+"\\"+arquivoSalvo));
+            pw = new PrintWriter(new FileWriter(path + "\\" + arquivoSalvo));
             pw.println(txtResultado.getText());
             pw.close();
 
@@ -640,45 +525,197 @@ public class Principal extends JFrame {
             e.printStackTrace();
         }
     }
-    public class gerarNf implements ActionListener {
-        public void actionPerformed(ActionEvent ev) {
-            gerarNota();
+
+    public String getNumeroNf(int min, int max) {
+        Random rand = new Random();
+        return String.valueOf(rand.nextInt(max - min + 1) + min);
+    }
+
+    public Integer getDhEmissao(int min, int max) {
+        Random rand = new Random();
+        return rand.nextInt(max - min + 1) + min;
+    }
+
+    public String getValorTotal(double min, double max) {
+        Random rand = new Random();
+        double randomNumber = rand.nextDouble() * (max - min) + min;
+        String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");
+        return numeroFormatado;//
+    }
+
+    public int getQtdeBoleto(int min, int max) {
+        Random rand = new Random();
+        int quantidade = rand.nextInt(max - min + 1) + min;
+        lblQtdeBoletoGerado.setText(String.valueOf(quantidade));
+        return quantidade;
+    }
+
+    public String getValorLiquido(double valorTotal, double desconto) {
+        double randomNumber = valorTotal - desconto;
+        String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");
+        return numeroFormatado;//.replace("\\.", ",");
+    }
+
+    public String getChNFe(String sufixo, String chNfe) {
+        int posicaoSufixo = chNfe.length() - sufixo.length();
+        String padraoUltimosDigitos = "(\\d{" + posicaoSufixo + "})(\\d{" + sufixo.length() + "})";
+        return chNfe.replaceFirst(padraoUltimosDigitos, "$1" + sufixo);
+    }
+
+    public void definirPath(String caminho) {
+        // metodo para criar/definir o caminho do config.json
+        System.setProperty("file.encoding", "UTF-8");
+        try {
+            File arquivoJson = new File("src/main/resources/config.json");
+
+            if (!Files.exists(arquivoJson.toPath())) {
+                try {
+                    Files.createFile(arquivoJson.toPath());
+                    JSONObject jsonSufixo = new JSONObject();
+                    jsonSufixo.put("caminhoDeSaida", caminho);
+                    Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    System.out.println("verifica se arquivo existe: " + e.getMessage());
+                }
+            } else {
+                JSONObject jsonSufixo = new JSONObject();
+                jsonSufixo.put("caminhoDeSaida", caminho);
+                Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao ler ou escrever no arquivo JSON: " + e.getMessage());
         }
     }
-    private void mudarCorDeFundoDosJFieldTexts(Container container) {
 
+    public String lerPath() {
+        // metodo para ler o caminho do config.json
+        System.setProperty("file.encoding", "UTF-8");
+        File arquivoJson = new File("src/main/resources/config.json");
+        String caminhoDeSaida = null;
+        if (Files.exists(arquivoJson.toPath())) {
+            String conteudoJson = null;
+            try {
+                conteudoJson = Files.readString(arquivoJson.toPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            JSONObject objetoJson = new JSONObject(conteudoJson);
+            caminhoDeSaida = objetoJson.getString("caminhoDeSaida");
+        }
+        return caminhoDeSaida;
+    }
+
+    public void atualizarSufixo() {
+        // metodo para incrementar o sufixo utilizado
+        System.setProperty("file.encoding", "UTF-8");
+        try {
+            File arquivoJson = new File("src/main/resources/sufixoChaveNf.json");
+            long sufixoChave = Long.parseLong(txtSufixoChaveNf.getText());
+
+            if (!Files.exists(arquivoJson.toPath())) {
+                try {
+                    Files.createFile(arquivoJson.toPath());
+                    JSONObject jsonSufixo = new JSONObject();
+                    jsonSufixo.put("sufixoChaveNf", sufixoChave);
+                    Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    System.out.println("verifica se arquivo existe: " + e.getMessage());
+                }
+            } else {
+                // If the file already exists, just update the value
+                JSONObject jsonSufixo = new JSONObject();
+                jsonSufixo.put("sufixoChaveNf", sufixoChave);
+                Files.write(arquivoJson.toPath(), jsonSufixo.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao ler ou escrever no arquivo JSON: " + e.getMessage());
+        }
+    }
+
+    public String lerSufixo() {
+        // metodo para ler o json e pegar o sufixo atualmente utilizado
+        System.setProperty("file.encoding", "UTF-8");
+        File arquivoJson = new File("src/main/resources/sufixoChaveNf.json");
+        String sufixoChave = "";
+
+        if (Files.exists(arquivoJson.toPath())) {
+            //String conteudoJson = lerArquivoComoString(String.valueOf(arquivoJson));
+            String conteudoJson = null;
+            try {
+                conteudoJson = Files.readString(arquivoJson.toPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            JSONObject objetoJson = new JSONObject(conteudoJson);
+            sufixoChave = String.valueOf(objetoJson.getLong("sufixoChaveNf"));
+        }
+        return sufixoChave;
+    }
+
+    public void lerXml(String arquivo) {
+        try {
+            txtResultado.setText("");
+
+            File file = new File(arquivo);
+            DocumentBuilderFactory fabrica = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = fabrica.newDocumentBuilder();
+            Document doc = db.parse(file);
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4"); // Define o tamanho da indentação (2 espaços)
+
+            StringWriter stringWriter = new StringWriter();
+
+            transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
+            String xmlData = stringWriter.toString().replaceAll("\\s+\\n", "\n");
+
+            txtXML.setText(xmlData);
+            txtXML.setCaretPosition(0);
+            scrlPnlTxtXml.setViewportView(txtXML);
+            scrlPnlTxtXml.setBounds(10, 40, 482, 550);
+            scrlPnlTxtXml.getVerticalScrollBar().setForeground(temaScrollBg);
+            scrlPnlTxtXml.getVerticalScrollBar().setBackground(temaScrollBg);
+            pnlMeio.add(scrlPnlTxtXml);
+
+            btnGerarNf.setEnabled(true);
+            btnSalvarResultado.setEnabled(true);
+            btnGerarLote.setEnabled(true);
+        } catch (Exception e) {
+            System.out.println("ler xml - msg excecao: " + e);
+        }
+    }
+
+    private void mudarCorDeFundoDosJFieldTexts(Container container) {
         for (Component component : container.getComponents()) {
-            if (component instanceof JTextArea){
-                JTextArea txtArea = (JTextArea) component;
+            if (component instanceof JTextArea txtArea) {
                 txtArea.setBackground(temaTxtAreaBg);
                 txtArea.setForeground(temaText);
                 Border lineBorder = BorderFactory.createLineBorder(temaScroll);
                 Border paddedBorder = BorderFactory.createEmptyBorder(0, 4, 0, 0);
                 txtArea.setBorder(BorderFactory.createCompoundBorder(lineBorder, paddedBorder));
             }
-            if (component instanceof JLabel){
-                JLabel labels = (JLabel) component;
+            if (component instanceof JLabel labels) {
                 labels.setForeground(temaText);
             }
-            if (component instanceof JScrollPane){
-                JScrollPane scrolls = (JScrollPane) component;
+            if (component instanceof JScrollPane scrolls) {
                 scrolls.getHorizontalScrollBar().setBackground(temaScrollBg);
                 scrolls.getVerticalScrollBar().setBackground(temaScrollBg);
             }
-            if (component instanceof JPanel && component.getName().equals("topo")){
+            if (component instanceof JPanel && component.getName().equals("topo")) {
                 JPanel painel = (JPanel) component;
                 painel.setBackground(temaFaixaSuperior);
             }
-            if (component instanceof JPanel && component.getName().equals("meio")){
+            if (component instanceof JPanel && component.getName().equals("meio")) {
                 JPanel painel = (JPanel) component;
                 painel.setBackground(temaFaixaMeio);
             }
-            if (component instanceof JPanel && component.getName().equals("bot")){
+            if (component instanceof JPanel && component.getName().equals("bot")) {
                 JPanel painel = (JPanel) component;
                 painel.setBackground(temaFaixaInferior);
             }
-            if (component instanceof JTextField) {
-                JTextField textField = (JTextField) component;
+            if (component instanceof JTextField textField) {
                 textField.setBackground(temaTextBg);
                 textField.setForeground(temaText);
                 Border lineBorder = BorderFactory.createLineBorder(temaTxtAreaBorda);
@@ -690,57 +727,19 @@ public class Principal extends JFrame {
             }
         }
     }
-    public String getNumeroNf(int min, int max) {
-        Random rand = new Random();
-        return String.valueOf(rand.nextInt(max - min + 1) + min);
-    }
-    public Integer getDhEmissao(int min, int max) {
-        Random rand = new Random();
-        return rand.nextInt(max - min + 1) + min;
-    }
-    public String getValorTotal(double min, double max) {
-        Random rand = new Random();
-        double randomNumber = rand.nextDouble() * (max - min) + min;
-        String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");;
-        return numeroFormatado;//
+
+    public class gerarNf implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
+            gerarNota();
+        }
     }
 
-    public int getQtdeBoleto(int min, int max) {
-        Random rand = new Random();
-        int quantidade = rand.nextInt(max - min + 1) + min;
-        lblQtdeBoletoGerado.setText(String.valueOf(quantidade));
-        return quantidade;
-    }
-    public String getValorLiquido(double valorTotal, double desconto) {
-        double randomNumber = valorTotal - desconto;
-        String numeroFormatado = String.format("%.2f", randomNumber).replace(",", ".");
-        return numeroFormatado;//.replace("\\.", ",");
-    }
-    public String getChNFe(String sufixo, String chNfe) {
-        int posicaoSufixo = chNfe.length() - sufixo.length();
-        String padraoUltimosDigitos = "(\\d{"+posicaoSufixo+"})(\\d{" + sufixo.length()+"})";
-        return chNfe.replaceFirst(padraoUltimosDigitos, "$1" + sufixo);
-    }
-    public static String getDataEmissao(int dias) {
-        LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime emissionDateTime = agora.minusDays(dias);
-        Instant instant = emissionDateTime.atZone(ZoneId.of("America/Sao_Paulo")).toInstant();
-        Date date = Date.from(instant);
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        String dataEmissao = df.format(date).replaceAll("(\\-\\d\\d)(\\d\\d)", "$1:$2");
-        return dataEmissao;
-    }
     public class Salvar implements ActionListener {
         public String arquivoSalvo;
-
         public void actionPerformed(ActionEvent ev) {
             JFileChooser fcSalvar = new JFileChooser();
             String path;
-            try {
-                path = lerPath();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            path = lerPath();
             fcSalvar.setCurrentDirectory(new File(path));
             fcSalvar.setDialogTitle("Salve o XML");
 
@@ -773,11 +772,12 @@ public class Principal extends JFrame {
             }
         }
     }
+
     public class gerarLote implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             int qtdeNfs = 0;
 
-            String qtdeNfsStr = JOptionPane.showInputDialog("Quantidade de NFs:","5");
+            String qtdeNfsStr = JOptionPane.showInputDialog("Quantidade de NFs:", "5");
             if (qtdeNfsStr != null) {
                 try {
                     qtdeNfs = Integer.parseInt(qtdeNfsStr);
@@ -791,27 +791,23 @@ public class Principal extends JFrame {
             }
         }
     }
+
     public class escolherTema implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             String temaEscolhido = (String) cmbbxTema.getSelectedItem();
             tema(temaEscolhido);
             mudarCorDeFundoDosJFieldTexts(pnlGeral);
-
         }
-
     }
+
     public class escolheArquivo extends Component implements ActionListener {
         public String arquivo;
 
         public void actionPerformed(ActionEvent ev) {
             JFileChooser fc = new JFileChooser();
             String path = null;
-            try {
-                path = lerPath();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            path = lerPath();
             fc.setCurrentDirectory(new File(path));
             fc.setDialogTitle("Selecione o XML");
 
@@ -824,6 +820,7 @@ public class Principal extends JFrame {
             }
         }
     }
+
     public class definirPath extends Component implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             String pathSugerido = "E:\\qa\\nf";
@@ -831,15 +828,12 @@ public class Principal extends JFrame {
             if (path == null) {
                 path = pathSugerido;
             }
-            try {
-                definirPath(path);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            definirPath(path);
         }
     }
+
     public class SelecionarTexto implements FocusListener {
-        private JTextField campoAlvo;
+        private final JTextField campoAlvo;
 
         public SelecionarTexto(JTextField campoAlvo) {
             this.campoAlvo = campoAlvo;
@@ -855,9 +849,10 @@ public class Principal extends JFrame {
 
         }
     }
+
     public class limitaTexto implements KeyListener {
-        private int tamanho;
-        private JTextField campoAlvo;
+        private final int tamanho;
+        private final JTextField campoAlvo;
 
         public limitaTexto(int tamanho, JTextField campoAlvo) {
             this.tamanho = tamanho;
@@ -893,19 +888,5 @@ public class Principal extends JFrame {
                 }
             }
         }
-    }
-    private static String lerArquivoComoString(String filePath) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            return stringBuilder.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }
